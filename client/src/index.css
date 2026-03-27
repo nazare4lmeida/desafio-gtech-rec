@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy:      #1E3A5F;
+  --blue:      #2E6DA4;
+  --sky:       #A8C5E0;
+  --slate:     #2F4F4F;
+  --bg:        #EFF4FA;
+  --surface:   #FFFFFF;
+  --border:    #D0DFF0;
+  --text:      #18293E;
+  --muted:     #6B8299;
+  --green:     #2D7A4A;
+  --green-bg:  #E6F4EE;
+  --green-bdr: #A8D9BE;
+  --red:       #B03030;
+  --red-bg:    #FDEAEA;
+  --red-bdr:   #F0AAAA;
+  --gold:      #B8820A;
+  --gold-bg:   #FEF5E0;
+  --gold-bdr:  #F0D080;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Code editor textarea */
+.code-textarea {
+  flex: 1;
+  padding: 13px;
+  background: transparent;
+  color: #e6edf3;
+  font-size: 0.8rem;
+  line-height: 1.72;
+  border: none;
+  outline: none;
+  resize: vertical;
+  min-height: 140px;
+  font-family: 'Space Mono', monospace;
+  caret-color: #58a6ff;
+  tab-size: 2;
+}
+
+/* Toggle switch */
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  left: 3px;
+  top: 3px;
+  transition: 0.3s;
+}
+input:checked + .toggle-slider {
+  background: var(--blue);
+}
+input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--sky); }

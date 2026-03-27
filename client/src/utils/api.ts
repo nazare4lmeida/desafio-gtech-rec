@@ -1,0 +1,59 @@
+import axios from 'axios'
+import { AdminResultRow, AdminStats, PresencaResult, Question, RecoveryResult, StudentResult } from '../types'
+
+const api = axios.create({ baseURL: '/api' })
+
+export const fetchQuestions = () =>
+  api.get<Question[]>('/questions').then((r) => r.data)
+
+export const updateQuestion = (id: number, data: Partial<Question>) =>
+  api.put<Question>(`/questions/${id}`, data).then((r) => r.data)
+
+export const fetchResults = () =>
+  api.get<StudentResult[]>('/results').then((r) => r.data)
+
+export const postResult = (result: Omit<StudentResult, 'id' | 'ts'>) =>
+  api.post<StudentResult>('/results', result).then((r) => r.data)
+
+export const deleteAllResults = () =>
+  api.delete('/results').then((r) => r.data)
+
+export const deleteResult = (id: number) =>
+  api.delete(`/results/${id}`).then((r) => r.data)
+
+export const fetchStats = () =>
+  api.get<AdminStats>('/stats').then((r) => r.data)
+
+export const fetchRecoveryResults = () =>
+  api.get<RecoveryResult[]>('/recovery-results').then((r) => r.data)
+
+export const postRecoveryResult = (data: {
+  name: string
+  email: string
+  score: number
+  passed: boolean
+  projectScore?: number
+}) => api.post('/recovery-results', data).then((r) => r.data)
+
+export const deleteRecoveryResult = (id: number) =>
+  api.delete(`/recovery-results/${id}`).then((r) => r.data)
+
+export const fetchPresencaResults = () =>
+  api.get<PresencaResult[]>('/presenca-results').then((r) => r.data)
+
+export const postPresencaResult = (data: {
+  name: string
+  email: string
+  presencaPct: number
+  previousPct?: number
+  challengePct?: number
+}) => api.post('/presenca-results', data).then((r) => r.data)
+
+export const deletePresencaResult = (id: number) =>
+  api.delete(`/presenca-results/${id}`).then((r) => r.data)
+
+export const fetchAdminResults = () =>
+  api.get<AdminResultRow[]>('/admin-results').then((r) => r.data)
+
+export const deleteAdminResults = (rows: Array<Pick<AdminResultRow, 'id' | 'module'>>) =>
+  api.delete('/admin-results', { data: { rows } }).then((r) => r.data)
