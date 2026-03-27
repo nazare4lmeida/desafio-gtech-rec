@@ -127,8 +127,10 @@ const CAT_COLORS: Record<string, string> = {
 };
 
 export default function ProvaRecuperacao() {
-  const { state, navigate } = useApp();
-  const windowStatus = getWindowStatus();
+  const { state, navigate, setAdminTab } = useApp();
+  const windowStatus = getWindowStatus(state.user?.email);
+  const isAdminUser =
+    state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
   const submissionKey = `recovery_submitted_${state.user?.email}_${WINDOW_OPEN}`;
   const progressKey = `recovery_progress_${state.user?.email}_${WINDOW_OPEN}`;
 
@@ -316,6 +318,19 @@ export default function ProvaRecuperacao() {
         onCopy={(e) => e.preventDefault()}
         style={{ userSelect: "none" }}
       >
+        {isAdminUser && (
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={() => {
+                setAdminTab("dashboard");
+                navigate("admin");
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy text-white text-sm font-semibold shadow-sm hover:bg-blue transition-all duration-200"
+            >
+              ← Voltar para Admin
+            </button>
+          </div>
+        )}
         <div className="bg-surface rounded-card border border-border shadow-card-lg p-8">
           <div className="text-center mb-6">
             <div

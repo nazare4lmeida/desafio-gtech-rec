@@ -281,5 +281,5 @@ app.get('/api/stats', (_req, res) => {
   })
 })
 
-app.listen(PORT, () => console.log(`✅  DevDeskGame API → http://localhost:${PORT}`))
+app.listen(PORT, () => console.log(`✅  Desafio GtechRecupera API → http://localhost:${PORT}`))
 export default app

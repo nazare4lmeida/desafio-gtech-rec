@@ -52,7 +52,7 @@ function readStorage(key: string) {
 }
 
 export default function SelectScreen() {
-  const { state, db, startChallenge, navigate } = useApp();
+  const { state, db, startChallenge, navigate, setAdminTab } = useApp();
   const windowStatus = getWindowStatus();
   const isWindowOpen = windowStatus === "open";
   const isAdminUser =
@@ -85,6 +85,20 @@ export default function SelectScreen() {
 
   return (
     <div className="w-full max-w-[680px] mt-2 animate-fade-up">
+      {isAdminUser && (
+        <div className="w-full flex justify-end mb-4">
+          <button
+            onClick={() => {
+              setAdminTab("dashboard");
+              navigate("admin");
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy text-white text-sm font-semibold shadow-sm hover:bg-blue transition-all duration-200"
+          >
+            ← Voltar para o painel de admin
+          </button>
+        </div>
+      )}
+
       <p className="font-mono text-[.68rem] tracking-[2px] uppercase text-blue mb-1">
         Bem-vindo, {state.user!.name.split(" ")[0]}!
       </p>
@@ -152,6 +166,47 @@ export default function SelectScreen() {
         <div className="flex-1 h-px bg-border" />
       </div>
 
+      {/* Área de testes do admin */}
+      {isAdminUser && (
+        <div className="mt-6 bg-surface rounded-[14px] border border-border shadow-card p-5 mb-6">
+          <p className="font-mono text-[.68rem] tracking-[2px] uppercase text-red mb-2">
+            Área de testes do admin
+          </p>
+
+          <h3 className="text-[1rem] font-bold text-navy mb-2">
+            Acesso rápido para desenvolvimento
+          </h3>
+
+          <p className="text-[.82rem] text-muted mb-4">
+            Esses botões aparecem só para o admin e permitem testar módulos
+            bloqueados para os alunos.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => navigate("roteiro")}
+              className="px-4 py-2 rounded-xl bg-green text-white text-sm font-semibold hover:opacity-90 transition-all"
+            >
+              Abrir Guia de Estudos
+            </button>
+
+            <button
+              onClick={() => navigate("recuperacao")}
+              className="px-4 py-2 rounded-xl bg-gold text-white text-sm font-semibold hover:opacity-90 transition-all"
+            >
+              Testar Prova de Recuperação
+            </button>
+
+            <button
+              onClick={() => navigate("presenca")}
+              className="px-4 py-2 rounded-xl bg-blue text-white text-sm font-semibold hover:opacity-90 transition-all"
+            >
+              Testar Desafio Presença
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Módulos extras */}
       <div className="flex flex-col gap-3">
         {EXTRA_MODULES.map((m, i) => {
@@ -196,58 +251,18 @@ export default function SelectScreen() {
               }}
               style={{ animationDelay: `${0.3 + i * 0.08}s` }}
               className={`animate-fade-up flex items-center gap-5 p-5 bg-surface border-[1.5px] border-border rounded-[14px]
-  transition-all duration-200
-  ${
-    isLockedByStudyMode
-      ? "opacity-75 cursor-not-allowed"
-      : "cursor-pointer hover:border-blue hover:shadow-[0_6px_24px_rgba(46,109,164,.13)] hover:-translate-y-0.5"
-  }`}
+                transition-all duration-200
+                ${
+                  isLockedByStudyMode
+                    ? "opacity-75 cursor-not-allowed"
+                    : "cursor-pointer hover:border-blue hover:shadow-[0_6px_24px_rgba(46,109,164,.13)] hover:-translate-y-0.5"
+                }`}
             >
               <div
                 className={`w-12 h-12 ${m.bgColor} rounded-xl flex items-center justify-center text-2xl flex-shrink-0`}
               >
                 {m.icon}
               </div>
-
-              {isAdminUser && (
-                <div className="mt-6 bg-surface rounded-[14px] border border-border shadow-card p-5">
-                  <p className="font-mono text-[.68rem] tracking-[2px] uppercase text-red mb-2">
-                    Área de testes do admin
-                  </p>
-
-                  <h3 className="text-[1rem] font-bold text-navy mb-2">
-                    Acesso rápido para desenvolvimento
-                  </h3>
-
-                  <p className="text-[.82rem] text-muted mb-4">
-                    Esses botões aparecem só para o admin e permitem testar
-                    módulos bloqueados para os alunos.
-                  </p>
-
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={() => navigate("roteiro")}
-                      className="px-4 py-2 rounded-xl bg-green text-white text-sm font-semibold hover:opacity-90 transition-all"
-                    >
-                      Abrir Guia de Estudos
-                    </button>
-
-                    <button
-                      onClick={() => navigate("recuperacao")}
-                      className="px-4 py-2 rounded-xl bg-gold text-white text-sm font-semibold hover:opacity-90 transition-all"
-                    >
-                      Testar Prova de Recuperação
-                    </button>
-
-                    <button
-                      onClick={() => navigate("presenca")}
-                      className="px-4 py-2 rounded-xl bg-blue text-white text-sm font-semibold hover:opacity-90 transition-all"
-                    >
-                      Testar Desafio Presença
-                    </button>
-                  </div>
-                </div>
-              )}
 
               <div className="flex-1">
                 <h3 className="text-[.95rem] font-bold text-navy">{m.title}</h3>

@@ -34,11 +34,11 @@ export default function LoginScreen() {
             ⌨️
           </div>
           <span className="font-mono font-bold text-[1.4rem] text-white tracking-tight">
-            Dev<span className="text-sky">Desk</span>Game
+            Desafio<span className="text-sky">Gtech</span>Recupera
           </span>
         </div>
         <p className="text-[.82rem] text-white/50 font-sans">
-          Plataforma de desafios de programação
+          Plataforma de Desafios de Recuperação para Alunos da Geração Tech.
         </p>
       </div>
 

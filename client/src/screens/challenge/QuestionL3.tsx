@@ -27,7 +27,7 @@ export default function QuestionL3({ question, index, onAnswer, onNext, isLast }
           <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
           <span className="font-mono text-[.7rem] text-sky/50 ml-2">
-            devdeskgame — questão {index + 1}/5
+            Desafio GtechRecupera — questão {index + 1}/5
           </span>
         </div>
 

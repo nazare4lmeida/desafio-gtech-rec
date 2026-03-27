@@ -106,7 +106,7 @@ export default function CodeChallengeScreen({ onToast }: Props) {
       <div className="rounded-card overflow-hidden" style={{ background: '#1E3A5F', boxShadow: '0 0 0 1px rgba(168,197,224,.2), 0 20px 60px rgba(30,58,95,.35)' }}>
         <div className="flex items-center gap-2 px-5 py-3 border-b border-sky/10" style={{ background: '#162d4a' }}>
           <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" /><span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" /><span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-          <span className="font-mono text-[.7rem] text-sky/50 ml-2">devdeskgame — desafio de código</span>
+          <span className="font-mono text-[.7rem] text-sky/50 ml-2">Desafio GtechRecupera — desafio de código</span>
         </div>
         <div className="p-7 text-white">{inner}</div>
       </div>

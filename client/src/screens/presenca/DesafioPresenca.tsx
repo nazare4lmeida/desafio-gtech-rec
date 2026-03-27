@@ -194,8 +194,10 @@ function PresCard({
 }
 
 export default function DesafioPresenca() {
-  const { state, navigate } = useApp();
-  const windowStatus = getWindowStatus();
+  const { state, navigate, setAdminTab } = useApp();
+  const windowStatus = getWindowStatus(state.user?.email);
+  const isAdminUser =
+    state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
   const submissionKey = `presenca_submitted_${state.user?.email}_${WINDOW_OPEN}`;
   const progressKey = `presenca_progress_${state.user?.email}_${WINDOW_OPEN}`;
 
@@ -361,6 +363,19 @@ export default function DesafioPresenca() {
   if (!eligible) {
     return (
       <div className="w-full max-w-[480px] animate-scale-in">
+        {isAdminUser && (
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={() => {
+                setAdminTab("dashboard");
+                navigate("admin");
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy text-white text-sm font-semibold shadow-sm hover:bg-blue transition-all duration-200"
+            >
+              ← Voltar para Admin
+            </button>
+          </div>
+        )}
         <div className="bg-surface rounded-card border border-border shadow-card p-10 text-center">
           <div className="text-5xl mb-4">🚫</div>
           <h2 className="font-display text-xl font-extrabold text-red mb-2">

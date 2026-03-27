@@ -1,4 +1,4 @@
-# DevDeskGame 🎮
+# Desafio GtechRecupera 🎮
 
 Plataforma de desafios de programação para alunos — com 3 layouts visuais distintos, painel admin completo e fluxo de questões interativo.
 

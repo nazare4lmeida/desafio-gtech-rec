@@ -8,7 +8,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 flex items-center justify-between h-[58px] px-7 bg-navy shadow-[0_2px_16px_rgba(0,0,0,.22)]">
       <div className="flex items-center gap-2.5 font-mono font-bold text-[1.05rem] text-white tracking-tight select-none">
         <div className="w-[30px] h-[30px] bg-blue rounded-lg flex items-center justify-center text-[.95rem]">⌨️</div>
-        Dev<span className="text-sky">Desk</span>Game
+        Desafio<span className="text-sky">Gtech</span>Recupera
       </div>
 
       {state.user && (

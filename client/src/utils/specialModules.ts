@@ -97,17 +97,26 @@ export const RECOVERY_QUESTIONS: RecoveryQuestion[] = [
   },
 ];
 
-export function getWindowStatus(): 'before' | 'open' | 'after' {
-  const now = Date.now()
-  if (now < WINDOW_OPEN) return 'before'
-  if (now > WINDOW_CLOSE) return 'after'
-  return 'open'
+export function getWindowStatus(
+  userEmail?: string,
+): "before" | "open" | "after" {
+  const isAdmin = userEmail?.toLowerCase() === "nazyalmeida@gmail.com";
+
+  if (isAdmin) return "open";
+
+  const now = Date.now();
+  if (now < WINDOW_OPEN) return "before";
+  if (now > WINDOW_CLOSE) return "after";
+  return "open";
 }
 
-export function isWindowOpen() {
-  return getWindowStatus() === 'open'
-} 
+export function isWindowOpen(userEmail?: string) {
+  const isAdmin = userEmail?.toLowerCase() === "nazyalmeida@gmail.com";
 
+  if (isAdmin) return true;
+
+  return getWindowStatus() === "open";
+}
 
 export interface StudentProfile {
   presencaPct: number;

@@ -18,7 +18,7 @@ export default function ResultScreen({ onToast }: { onToast: (msg: string) => vo
   const worst  = sorted.slice(0, 2).map(([c]) => c)
   const recs   = worst.flatMap(c => (db.recs[c] || []).slice(0, 2))
 
-  const shareText = `🎮 DevDeskGame — ${state.user!.name}\n📊 ${state.score}/7 (${p}%) — ${passed ? '✅ Aprovado' : '❌ Reprovado'}\n\nAcesse e teste seus conhecimentos!`
+  const shareText = `🎮 Desafio GtechRecupera — ${state.user!.name}\n📊 ${state.score}/7 (${p}%) — ${passed ? '✅ Aprovado' : '❌ Reprovado'}\n\nAcesse e teste seus conhecimentos!`
 
   const handleShare = () => {
     navigator.clipboard.writeText(shareText)
