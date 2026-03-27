@@ -57,7 +57,7 @@ export default function AdminResults({
     setLoading(true);
     try {
       const data = await fetchAdminResults();
-      setRows(data);
+      setRows(Array.isArray(data) ? data : []);
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ export default function AdminResults({
 
   const filteredRows = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return rows.filter((row) => {
+    return (Array.isArray(rows) ? rows : []).filter((row) => {
       const moduleMatch = moduleFilter === "all" || row.module === moduleFilter;
       const queryMatch =
         !normalizedQuery ||
@@ -234,7 +234,7 @@ export default function AdminResults({
             </tr>
           </thead>
           <tbody>
-            {filteredRows.map((row) => {
+            {(Array.isArray(filteredRows) ? filteredRows : []).map((row) => {
               const key = `${row.module}-${row.id}`;
               return (
                 <tr
