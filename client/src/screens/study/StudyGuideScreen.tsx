@@ -473,7 +473,7 @@ export default function StudyGuideScreen() {
                           <span className="font-bold mr-2">
                             {String.fromCharCode(65 + optionIndex)}.
                           </span>
-                          <span dangerouslySetInnerHTML={{ __html: option }} />
+                          <code>{option}</code>
                         </button>
                       );
                     })}
@@ -510,11 +510,7 @@ export default function StudyGuideScreen() {
                       <p>
                         <span className="font-bold text-navy">Gabarito:</span>{" "}
                         {String.fromCharCode(65 + question.correct)}.{" "}
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: question.options[question.correct],
-                          }}
-                        />
+                        <code>{question.options[question.correct]}</code>
                       </p>
                       <p className="mt-2">{question.explanation}</p>
                     </div>
