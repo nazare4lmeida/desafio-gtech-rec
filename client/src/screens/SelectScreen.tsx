@@ -55,6 +55,8 @@ export default function SelectScreen() {
   const { state, db, startChallenge, navigate } = useApp();
   const windowStatus = getWindowStatus();
   const isWindowOpen = windowStatus === "open";
+  const isAdminUser =
+    state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
 
   const recoveryKey = `recovery_submitted_${state.user?.email}_${WINDOW_OPEN}`;
   const presencaKey = `presenca_submitted_${state.user?.email}_${WINDOW_OPEN}`;
@@ -206,6 +208,46 @@ export default function SelectScreen() {
               >
                 {m.icon}
               </div>
+
+              {isAdminUser && (
+                <div className="mt-6 bg-surface rounded-[14px] border border-border shadow-card p-5">
+                  <p className="font-mono text-[.68rem] tracking-[2px] uppercase text-red mb-2">
+                    Área de testes do admin
+                  </p>
+
+                  <h3 className="text-[1rem] font-bold text-navy mb-2">
+                    Acesso rápido para desenvolvimento
+                  </h3>
+
+                  <p className="text-[.82rem] text-muted mb-4">
+                    Esses botões aparecem só para o admin e permitem testar
+                    módulos bloqueados para os alunos.
+                  </p>
+
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => navigate("roteiro")}
+                      className="px-4 py-2 rounded-xl bg-green text-white text-sm font-semibold hover:opacity-90 transition-all"
+                    >
+                      Abrir Guia de Estudos
+                    </button>
+
+                    <button
+                      onClick={() => navigate("recuperacao")}
+                      className="px-4 py-2 rounded-xl bg-gold text-white text-sm font-semibold hover:opacity-90 transition-all"
+                    >
+                      Testar Prova de Recuperação
+                    </button>
+
+                    <button
+                      onClick={() => navigate("presenca")}
+                      className="px-4 py-2 rounded-xl bg-blue text-white text-sm font-semibold hover:opacity-90 transition-all"
+                    >
+                      Testar Desafio Presença
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex-1">
                 <h3 className="text-[.95rem] font-bold text-navy">{m.title}</h3>
