@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import { useApp } from "../../hooks/useAppStore";
 import { RECOVERY_QUESTIONS } from "../../data/recoveryQuestions";
 
-interface StudyQuestion {
+// --- INTERFACES ---
+
+export interface StudyQuestion {
   id: string;
   topic: string;
   prompt: string;
@@ -12,7 +14,7 @@ interface StudyQuestion {
   source: "prova" | "extra";
 }
 
-interface ChallengeExample {
+export interface ChallengeExample {
   id: string;
   title: string;
   level: string;
@@ -23,7 +25,17 @@ interface ChallengeExample {
   tips: string[];
 }
 
-const TOPIC_STYLES: Record<string, string> = {
+export interface StudyTopic {
+  title: string;
+  icon: string;
+  summary: string;
+  points: string[];
+  example: string[];
+}
+
+// --- CONFIGURAÇÕES DE ESTILO ---
+
+export const TOPIC_STYLES: Record<string, string> = {
   HTML: "bg-[#E0EDF8] text-blue border-[#D0DFF0]",
   CSS: "bg-green-bg text-green border-green-bdr",
   React: "bg-gold-bg text-gold border-gold-bdr",
@@ -31,7 +43,9 @@ const TOPIC_STYLES: Record<string, string> = {
   "Banco de Dados": "bg-[#EDE8F8] text-[#5B4A9B] border-[#D3CBF3]",
 };
 
-const EXTRA_QUESTIONS: StudyQuestion[] = [
+// --- DADOS ---
+
+export const EXTRA_QUESTIONS: StudyQuestion[] = [
   {
     id: "extra-1",
     topic: "HTML",
@@ -88,7 +102,7 @@ const EXTRA_QUESTIONS: StudyQuestion[] = [
   },
 ];
 
-const STUDY_TOPICS = [
+export const STUDY_TOPICS: StudyTopic[] = [
   {
     title: "HTML",
     icon: "🌐",
@@ -164,7 +178,7 @@ const STUDY_TOPICS = [
   },
 ];
 
-const CHALLENGE_EXAMPLES: ChallengeExample[] = [
+export const CHALLENGE_EXAMPLES: ChallengeExample[] = [
   {
     id: "principal",
     title: "Desafio principal do sistema",
@@ -218,6 +232,7 @@ const CHALLENGE_EXAMPLES: ChallengeExample[] = [
   },
 ];
 
+// --- COMPONENTES ---
 function CodeBlock({ lines }: { lines: string[] }) {
   return (
     <pre className="rounded-2xl bg-[#0F1724] text-[#E6EDF3] text-[.8rem] leading-7 p-4 overflow-x-auto font-mono">
