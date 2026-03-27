@@ -27,6 +27,8 @@ export default function AdminDashboard() {
         fetchAdminResults(),
       ]);
 
+      const safeResults = Array.isArray(resultsData) ? resultsData : [];
+
       setStats({
         ...emptyStats,
         ...(statsData ?? {}),
@@ -45,7 +47,7 @@ export default function AdminDashboard() {
         categories: statsData?.categories ?? {},
       });
 
-      setLatest((resultsData ?? []).slice(0, 5));
+      setLatest(safeResults.slice(0, 5));
     } finally {
       setLoading(false);
     }
@@ -219,7 +221,7 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {latest.map((row) => (
+              {(Array.isArray(latest) ? latest : []).map((row) => (
                 <tr
                   key={`${row.module}-${row.id}`}
                   className="border-t border-border hover:bg-[#F8FBFF]"
