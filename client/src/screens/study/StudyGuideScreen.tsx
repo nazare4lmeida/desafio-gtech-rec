@@ -256,7 +256,7 @@ export default function StudyGuideScreen() {
       prompt: q.text.replace(/<code>/g, "").replace(/<\/code>/g, ""),
       options: q.options,
       correct: q.correct,
-      explanation: `Resposta correta: ${q.options[q.correct]}. Revise esse tópico e tente justificar por que essa alternativa funciona melhor que as demais.`,
+      explanation: q.explanation,
       source: "prova" as const,
     }));
 

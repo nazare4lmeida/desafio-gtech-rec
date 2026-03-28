@@ -187,8 +187,6 @@ export default function ProvaRecuperacao() {
       }),
     );
   }, [
-    state.user,
-    progressKey,
     started,
     current,
     selected,
@@ -197,6 +195,8 @@ export default function ProvaRecuperacao() {
     finished,
     score,
     bestScore,
+    progressKey,
+    state.user,
   ]);
 
   const q: RecoveryQuestion = RECOVERY_QUESTIONS[current];
@@ -241,19 +241,6 @@ export default function ProvaRecuperacao() {
         ts: Date.now(),
       }),
     );
-    localStorage.setItem(
-      submissionKey,
-      JSON.stringify({
-        name: state.user!.name,
-        email: state.user!.email,
-        course: state.user!.course,
-        score: finalScore,
-        bestScore: effectiveBest,
-        sendEmail,
-        ts: Date.now(),
-      }),
-    );
-
     saveStudentProfile(state.user!.email, { projectScore: effectiveBest });
 
     try {
@@ -261,14 +248,14 @@ export default function ProvaRecuperacao() {
         name: state.user!.name,
         email: state.user!.email,
         score: finalScore,
-        passed: effectiveBest >= RECOVERY_PASSING_SCORE,
-        projectScore: profile.projectScore,
+        passed: finalScore >= RECOVERY_PASSING_SCORE,
+        projectScore: effectiveBest,
       });
-    } catch {
-      // fallback local mantido
-    }
 
-    window.dispatchEvent(new Event("ddg:update"));
+      window.dispatchEvent(new Event("ddg:update"));
+    } catch (error) {
+      console.error("Erro ao salvar resultado:", error);
+    }
   };
 
   const passed = bestScore >= RECOVERY_PASSING_SCORE;
@@ -445,8 +432,8 @@ export default function ProvaRecuperacao() {
             {[
               ["📌", "10 questões", "Múltipla escolha"],
               ["✅", "60% mínimo", "6 de 10 acertos"],
-              ["🏅", "Certificado", "Gerado na hora"],
-              ["🔒", "Uma tentativa", "Por período"],
+              ["🏅", "Nota da Prova", "Gerada na hora"],
+              ["🔒", "Uma tentativa", "Pense bem antes de iniciar"],
             ].map(([icon, title, sub]) => (
               <div
                 key={title}

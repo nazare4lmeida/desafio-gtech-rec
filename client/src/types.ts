@@ -23,9 +23,9 @@ export type AdminTab =
   | "config";
 
 export interface User {
-  name: string
-  email: string
-  course: CourseTrack
+  name: string;
+  email: string;
+  course: CourseTrack;
 }
 
 export interface Question {
@@ -46,6 +46,7 @@ export interface RecoveryQuestion {
   text: string;
   options: string[];
   correct: number;
+  explanation: string;
 }
 
 export interface RecoveryResult {
@@ -160,9 +161,9 @@ export interface AppState {
 }
 
 export interface EmailPreference {
-  sendEmail: boolean
+  sendEmail: boolean;
 }
 
 export interface ModuleSubmissionMeta {
-  sendEmail?: boolean
+  sendEmail?: boolean;
 }

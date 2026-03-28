@@ -9,6 +9,7 @@ import {
 import { useAntiCheat } from "../../utils/moduleSecurity";
 import { postPresencaResult } from "../../utils/api";
 
+
 function Countdown({ targetMs }: { targetMs: number }) {
   const [diff, setDiff] = useState(targetMs - Date.now());
   useEffect(() => {
@@ -85,8 +86,8 @@ interface CodeLine {
   placeholder?: string;
 }
 interface TestCase {
-  input: number[];
-  expected: number[];
+  input: any;
+  expected: any;
   label: string;
 }
 
@@ -130,14 +131,37 @@ const TEST_CASES: TestCase[] = [
   { input: [1, 3, 5], expected: [], label: "filtrarPares([1,3,5]) → []" },
 ];
 
-function evalCode(code: string, input: number[]): number[] | null {
+const CHALLENGE_2_LINES: CodeLine[] = [
+  {
+    id: 5,
+    content: "// 2. Retorne 'HELLO WORLD' em maiúsculas",
+    editable: false,
+  },
+  { id: 6, content: "function saudar(texto) {", editable: false },
+  {
+    id: 7,
+    content: "",
+    editable: true,
+    placeholder: "  return texto.toUpperCase()",
+  },
+  { id: 8, content: "}", editable: false },
+];
+
+const TEST_CASES_2 = [
+  {
+    input: "hello world",
+    expected: "HELLO WORLD",
+    label: "saudar('hello world') → 'HELLO WORLD'",
+  },
+];
+
+function evalCode(code: string, input: any): any {
   try {
     const fn = new Function(
-      "numeros",
+      "val", // mudamos de 'numeros' para 'val' para ser genérico
       code.trimStart().startsWith("return") ? code : `return ${code}`,
     );
-    const result = fn(input);
-    return Array.isArray(result) ? result : null;
+    return fn(input);
   } catch {
     return null;
   }
@@ -214,6 +238,8 @@ export default function DesafioPresenca() {
 
   const [started, setStarted] = useState(saved?.started ?? false);
   const [userAnswer, setUserAnswer] = useState(saved?.userAnswer ?? "");
+  const [userAnswer2, setUserAnswer2] = useState(saved?.userAnswer2 ?? "");
+  const [step, setStep] = useState(1); // Controla se mostra o desafio 1 ou 2
   const [submitted, setSubmitted] = useState(saved?.submitted ?? false);
   const [results, setResults] = useState<{ pass: boolean; label: string }[]>(
     saved?.results ?? [],
@@ -247,39 +273,39 @@ export default function DesafioPresenca() {
         challengePct,
       }),
     );
-  }, [
-    state.user,
-    progressKey,
-    started,
-    userAnswer,
-    submitted,
-    results,
-    newPct,
-    prevPct,
-    challengePct,
-  ]);
-
+  }, [started, userAnswer, submitted, results, newPct, prevPct, challengePct, progressKey, state.user])
+  
   const meetsPresenca = profile.presencaPct >= 30;
   const meetsCourse = profile.coursePct >= 50;
   const eligible = meetsPresenca && meetsCourse;
 
   const handleSubmit = async () => {
-    const testResults = TEST_CASES.map((tc) => ({
+    // Avalia o Desafio 1 (Array)
+    const results1 = TEST_CASES.map((tc) => ({
       pass: arrEq(evalCode(userAnswer, tc.input), tc.expected),
       label: tc.label,
     }));
 
-    const passedTests = testResults.filter((result) => result.pass).length;
-    const computedChallengePct = Math.round(
-      (passedTests / TEST_CASES.length) * 100,
-    );
+    // Avalia o Desafio 2 (String/Hello World)
+    const results2 = TEST_CASES_2.map((tc) => ({
+      pass: evalCode(userAnswer2, tc.input) === tc.expected,
+      label: tc.label,
+    }));
+
+    // Combina todos os resultados
+    const allTestResults = [...results1, ...results2];
+    const totalTests = TEST_CASES.length + TEST_CASES_2.length;
+    const passedTests = allTestResults.filter((result) => result.pass).length;
+
+    const computedChallengePct = Math.round((passedTests / totalTests) * 100);
     const updatedPct = Math.max(profile.presencaPct, computedChallengePct);
 
-    setResults(testResults);
+    setResults(allTestResults);
     setPrevPct(profile.presencaPct);
     setChallengePct(computedChallengePct);
     setNewPct(updatedPct);
     setSubmitted(true);
+
     localStorage.setItem(
       submissionKey,
       JSON.stringify({
@@ -292,13 +318,15 @@ export default function DesafioPresenca() {
         ts: Date.now(),
       }),
     );
+
     localStorage.setItem(
       progressKey,
       JSON.stringify({
         started: true,
         userAnswer,
+        userAnswer2, // Adicionado para persistência
         submitted: true,
-        results: testResults,
+        results: allTestResults,
         newPct: updatedPct,
         prevPct: profile.presencaPct,
         challengePct: computedChallengePct,
@@ -524,10 +552,10 @@ export default function DesafioPresenca() {
           </p>
           <div className="grid grid-cols-2 gap-3 text-left mb-5">
             {[
-              ["📊", "Sua presença", `${profile.presencaPct}%`],
-              ["🎯", "Progresso", `${profile.coursePct}%`],
+              ["📊", "Cálculo de presença", "Baseado em acertos"],
+              ["🎯", "Progresso", "Baseado em acertos"],
               ["⚡", "Acertos = presença", "Prevalece a maior"],
-              ["🔒", "Uma tentativa", "Por período"],
+              ["🔒", "Uma tentativa", "Pense bem antes de iniciar"],
             ].map(([icon, title, sub]) => (
               <div
                 key={title}
@@ -594,7 +622,8 @@ export default function DesafioPresenca() {
             <span className="ml-2 text-sky/60 text-xs">filtrarPares.js</span>
           </div>
           <div className="p-4 space-y-1">
-            {CHALLENGE_LINES.map((line) => (
+            {/* AQUI: Ele decide qual desafio mostrar baseado no step */}
+            {(step === 1 ? CHALLENGE_LINES : CHALLENGE_2_LINES).map((line) => (
               <div key={line.id} className="flex items-center gap-3">
                 <span className="w-5 text-right text-sky/30 select-none shrink-0 text-xs">
                   {line.id}
@@ -602,8 +631,13 @@ export default function DesafioPresenca() {
                 {line.editable ? (
                   <input
                     type="text"
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
+                    // AQUI: Ele decide qual estado de resposta usar (userAnswer ou userAnswer2)
+                    value={step === 1 ? userAnswer : userAnswer2}
+                    onChange={(e) =>
+                      step === 1
+                        ? setUserAnswer(e.target.value)
+                        : setUserAnswer2(e.target.value)
+                    }
                     placeholder={line.placeholder}
                     className="flex-1 bg-[#2d4f70] border border-blue/40 rounded px-2 py-1 text-white placeholder-sky/40 text-[.82rem] font-mono outline-none focus:border-sky"
                     style={{ userSelect: "text" }}

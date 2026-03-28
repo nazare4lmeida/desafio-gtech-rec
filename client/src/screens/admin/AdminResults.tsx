@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminResultRow } from "../../types";
 import { deleteAdminResults, fetchAdminResults } from "../../utils/api";
 import { pct } from "../../utils/helpers";
+import * as XLSX from "xlsx";
 
 function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   if (!rows.length) return;
@@ -10,20 +11,23 @@ function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
 
   const escapeCsvValue = (value: unknown) => {
     const str = String(value ?? "");
-    if (str.includes('"') || str.includes(",") || str.includes("\n")) {
+    if (str.includes('"') || str.includes(";") || str.includes("\n")) {
       return `"${str.replace(/"/g, '""')}"`;
     }
     return str;
   };
 
   const csv = [
-    headers.join(","),
+    headers.join(";"),
     ...rows.map((row) =>
-      headers.map((header) => escapeCsvValue(row[header])).join(","),
+      headers.map((header) => escapeCsvValue(row[header])).join(";"),
     ),
-  ].join("\n");
+  ].join("\r\n");
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["\uFEFF" + csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -32,6 +36,16 @@ function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+function downloadXlsx(filename: string, rows: Record<string, unknown>[]) {
+  if (!rows.length) return;
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Resultados");
+  XLSX.writeFile(workbook, filename);
 }
 
 const MODULE_OPTIONS = [
@@ -128,20 +142,43 @@ export default function AdminResults({
     });
   };
 
-  const handleDeleteSelected = async () => {
-    if (!selectedRows.length) {
-      onToast("⚠️ Selecione pelo menos um resultado.");
-      return;
+const handleDeleteSelected = async () => {
+  if (!selectedRows.length) {
+    onToast("⚠️ Selecione pelo menos um resultado.");
+    return;
+  }
+
+  await deleteAdminResults(
+    selectedRows.map((row) => ({ id: row.id, module: row.module })),
+  );
+
+  selectedRows.forEach((row) => {
+    if (row.module === "recuperacao") {
+      Object.keys(localStorage)
+        .filter(
+          (key) =>
+            key.startsWith(`recovery_submitted_${row.email}_`) ||
+            key.startsWith(`recovery_progress_${row.email}_`),
+        )
+        .forEach((key) => localStorage.removeItem(key));
     }
 
-    await deleteAdminResults(
-      selectedRows.map((row) => ({ id: row.id, module: row.module })),
-    );
-    setSelected({});
-    onToast(`🗑 ${selectedRows.length} resultado(s) removido(s).`);
-    await loadRows();
-    window.dispatchEvent(new Event("ddg:update"));
-  };
+    if (row.module === "presenca") {
+      Object.keys(localStorage)
+        .filter(
+          (key) =>
+            key.startsWith(`presenca_submitted_${row.email}_`) ||
+            key.startsWith(`presenca_progress_${row.email}_`),
+        )
+        .forEach((key) => localStorage.removeItem(key));
+    }
+  });
+
+  setSelected({});
+  onToast(`🗑 ${selectedRows.length} resultado(s) removido(s).`);
+  await loadRows();
+  window.dispatchEvent(new Event("ddg:update"));
+};
 
   return (
     <div className="animate-fade-up">
@@ -176,6 +213,13 @@ export default function AdminResults({
             className="px-4 py-2 rounded-xl bg-navy text-white text-sm font-semibold hover:bg-blue transition-all"
           >
             Exportar CSV
+          </button>
+
+          <button
+            onClick={() => downloadXlsx("resultados-admin.xlsx", exportRows)}
+            className="px-4 py-2 rounded-xl bg-green text-white text-sm font-semibold hover:opacity-90 transition-all"
+          >
+            Exportar XLSX
           </button>
         </div>
       </div>
@@ -309,3 +353,4 @@ export default function AdminResults({
     </div>
   );
 }
+
