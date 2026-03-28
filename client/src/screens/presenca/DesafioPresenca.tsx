@@ -211,8 +211,10 @@ export default function DesafioPresenca() {
   const windowStatus = getWindowStatus(state.user?.email);
   const isAdminUser =
     state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
-  const submissionKey = `presenca_submitted_${state.user?.email}_${WINDOW_OPEN}`;
-  const progressKey = `presenca_progress_${state.user?.email}_${WINDOW_OPEN}`;
+  const ATTEMPT_VERSION = "reset-v5";
+
+const submissionKey = `presenca_submitted_${state.user?.email}_${ATTEMPT_VERSION}`;
+const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
 
   const loadPresencaProgress = () => {
     try {
@@ -361,7 +363,7 @@ export default function DesafioPresenca() {
         }),
       );
 
-      window.dispatchEvent(new Event("ddg:update"));
+      window.location.reload();
     } catch (error: any) {
       console.error("Erro ao salvar resultado:", error);
 

@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { supabase } from "./supabase";
+import { hasSupabaseConfig, supabase } from "./supabase";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -159,8 +159,66 @@ function saveDB() {
   fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2), "utf-8");
 }
 
-function buildAdminRows(): AdminResultRow[] {
-  const fullstack: AdminResultRow[] = db.results.map((r) => ({
+function getSupabaseClient() {
+  return supabase;
+}
+
+async function getFullstackResults(): Promise<StudentResult[]> {
+  const sb = getSupabaseClient();
+  if (!sb) return db.results;
+
+  const { data, error } = await sb
+    .from("results")
+    .select("*")
+    .order("ts", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as StudentResult[];
+}
+
+async function getRecoveryResults(): Promise<RecoveryResult[]> {
+  const sb = getSupabaseClient();
+  if (!sb) return db.recoveryResults;
+
+  const { data, error } = await sb
+    .from("recovery_results")
+    .select("*")
+    .order("ts", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((r) => ({
+    ...r,
+    projectScore: r.project_score,
+    bestScore: r.best_score,
+  })) as RecoveryResult[];
+}
+
+async function getPresencaResults(): Promise<PresencaResult[]> {
+  const sb = getSupabaseClient();
+  if (!sb) return db.presencaResults;
+
+  const { data, error } = await sb
+    .from("presenca_results")
+    .select("*")
+    .order("ts", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((r) => ({
+    ...r,
+    previousPct: r.previous_pct,
+    challengePct: r.challenge_pct,
+    presencaPct: r.presenca_pct,
+  })) as PresencaResult[];
+}
+
+function buildAdminRowsFromData(
+  results: StudentResult[],
+  recoveryResults: RecoveryResult[],
+  presencaResults: PresencaResult[],
+): AdminResultRow[] {
+  const fullstack: AdminResultRow[] = results.map((r) => ({
     id: r.id,
     name: r.name,
     email: r.email,
@@ -172,7 +230,7 @@ function buildAdminRows(): AdminResultRow[] {
     moduleLabel: "Teste Full-Stack",
   }));
 
-  const recovery: AdminResultRow[] = db.recoveryResults.map((r) => ({
+  const recovery: AdminResultRow[] = recoveryResults.map((r) => ({
     id: r.id,
     name: r.name,
     email: r.email,
@@ -184,7 +242,7 @@ function buildAdminRows(): AdminResultRow[] {
     moduleLabel: "Prova de Recuperação",
   }));
 
-  const presenca: AdminResultRow[] = db.presencaResults.map((r) => ({
+  const presenca: AdminResultRow[] = presencaResults.map((r) => ({
     id: r.id,
     name: r.name,
     email: r.email,
@@ -203,7 +261,21 @@ function buildAdminRows(): AdminResultRow[] {
   return [...fullstack, ...recovery, ...presenca].sort((a, b) => b.ts - a.ts);
 }
 
-function deleteRow(module: AdminResultRow["module"], id: number) {
+async function deleteRow(module: AdminResultRow["module"], id: number) {
+  const sb = getSupabaseClient();
+  if (sb) {
+    const table =
+      module === "fullstack"
+        ? "results"
+        : module === "recuperacao"
+          ? "recovery_results"
+          : "presenca_results";
+
+    const { error } = await sb.from(table).delete().eq("id", id);
+    if (error) throw error;
+    return;
+  }
+
   if (module === "fullstack")
     db.results = db.results.filter((r) => r.id !== id);
   if (module === "recuperacao")
@@ -227,17 +299,13 @@ app.put("/api/questions/:id", (req, res) => {
 });
 
 app.get("/api/results", async (_req, res) => {
-  const { data, error } = await supabase
-    .from("results")
-    .select("*")
-    .order("ts", { ascending: false });
-
-  if (error) {
+  try {
+    const data = await getFullstackResults();
+    res.json(data);
+  } catch (error: any) {
     console.error("Erro ao buscar results:", error);
     return res.status(500).json({ error: error.message });
   }
-
-  res.json(data ?? []);
 });
 
 app.post("/api/results", async (req, res) => {
@@ -253,49 +321,66 @@ app.post("/api/results", async (req, res) => {
     ts: Date.now(),
   };
 
-  const { data, error } = await supabase
-    .from("results")
-    .insert(payload)
-    .select()
-    .single();
+  try {
+    const sb = getSupabaseClient();
 
-  if (error) {
+    if (!sb) {
+      const nextId = db.results.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+      const saved = { ...payload, id: nextId };
+      db.results = [saved, ...db.results];
+      saveDB();
+      return res.status(201).json(saved);
+    }
+
+    const { data, error } = await sb.from("results").insert(payload).select().single();
+
+    if (error) {
+      console.error("Erro ao salvar result:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.status(201).json(data);
+  } catch (error: any) {
     console.error("Erro ao salvar result:", error);
     return res.status(500).json({ error: error.message });
   }
-
-  res.status(201).json(data);
 });
-app.delete("/api/results", (_req, res) => {
-  db.results = [];
-  saveDB();
-  res.json({ ok: true });
+app.delete("/api/results", async (_req, res) => {
+  try {
+    const sb = getSupabaseClient();
+    if (sb) {
+      const { error } = await sb.from("results").delete().gte("id", 0);
+      if (error) throw error;
+    } else {
+      db.results = [];
+      saveDB();
+    }
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error("Erro ao limpar results:", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
-app.delete("/api/results/:id", (req, res) => {
+app.delete("/api/results/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  db.results = db.results.filter((r) => r.id !== id);
-  saveDB();
-  res.json({ ok: true });
+
+  try {
+    await deleteRow("fullstack", id);
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error("Erro ao remover result:", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
 
 app.get("/api/recovery-results", async (_req, res) => {
-  const { data, error } = await supabase
-    .from("recovery_results")
-    .select("*")
-    .order("ts", { ascending: false });
-
-  if (error) {
+  try {
+    const data = await getRecoveryResults();
+    res.json(data);
+  } catch (error: any) {
     console.error("Erro ao buscar recovery_results:", error);
     return res.status(500).json({ error: error.message });
   }
-
-  res.json(
-    (data ?? []).map((r) => ({
-      ...r,
-      projectScore: r.project_score,
-      bestScore: r.best_score,
-    })),
-  );
 });
 
 app.post("/api/recovery-results", async (req, res) => {
@@ -317,54 +402,73 @@ app.post("/api/recovery-results", async (req, res) => {
     ts: Date.now(),
   };
 
-  const { data, error } = await supabase
-    .from("recovery_results")
-    .insert(payload)
-    .select()
-    .single();
+  try {
+    const sb = getSupabaseClient();
 
-  if (error) {
-    console.error("Erro ao salvar recovery_result:", error);
-
-    if (error.code === "23505") {
-      return res.status(409).json({ error: "Já submetido" });
+    if (!sb) {
+      const nextId = db.recoveryResults.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+      const saved = {
+        id: nextId,
+        name: payload.name,
+        email: payload.email,
+        course: payload.course ?? undefined,
+        score: payload.score,
+        passed: payload.passed,
+        ts: payload.ts,
+        projectScore: payload.project_score ?? undefined,
+        bestScore: payload.best_score,
+      };
+      db.recoveryResults = [saved, ...db.recoveryResults];
+      saveDB();
+      return res.status(201).json(saved);
     }
 
+    const { data, error } = await sb
+      .from("recovery_results")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Erro ao salvar recovery_result:", error);
+
+      if (error.code === "23505") {
+        return res.status(409).json({ error: "Já submetido" });
+      }
+
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.status(201).json({
+      ...data,
+      projectScore: data.project_score,
+      bestScore: data.best_score,
+    });
+  } catch (error: any) {
+    console.error("Erro ao salvar recovery_result:", error);
     return res.status(500).json({ error: error.message });
   }
-
-  res.status(201).json({
-    ...data,
-    projectScore: data.project_score,
-    bestScore: data.best_score,
-  });
 });
-app.delete("/api/recovery-results/:id", (req, res) => {
+app.delete("/api/recovery-results/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  db.recoveryResults = db.recoveryResults.filter((r) => r.id !== id);
-  saveDB();
-  res.json({ ok: true });
+
+  try {
+    await deleteRow("recuperacao", id);
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error("Erro ao remover recovery_result:", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
 
 app.get("/api/presenca-results", async (_req, res) => {
-  const { data, error } = await supabase
-    .from("presenca_results")
-    .select("*")
-    .order("ts", { ascending: false });
-
-  if (error) {
+  try {
+    const data = await getPresencaResults();
+    res.json(data);
+  } catch (error: any) {
     console.error("Erro ao buscar presenca_results:", error);
     return res.status(500).json({ error: error.message });
   }
-
-  res.json(
-    (data ?? []).map((r) => ({
-      ...r,
-      previousPct: r.previous_pct,
-      challengePct: r.challenge_pct,
-      presencaPct: r.presenca_pct,
-    })),
-  );
 });
 
 app.post("/api/presenca-results", async (req, res) => {
@@ -392,97 +496,165 @@ app.post("/api/presenca-results", async (req, res) => {
     ts: Date.now(),
   };
 
-  const { data, error } = await supabase
-    .from("presenca_results")
-    .insert(payload)
-    .select()
-    .single();
+  try {
+    const sb = getSupabaseClient();
 
-  if (error) {
-    console.error("Erro ao salvar presenca_result:", error);
-
-    if (error.code === "23505") {
-      return res.status(409).json({ error: "Já submetido" });
+    if (!sb) {
+      const nextId = db.presencaResults.reduce((maxId, item) => Math.max(maxId, item.id), 0) + 1;
+      const saved = {
+        id: nextId,
+        name: payload.name,
+        email: payload.email,
+        course: payload.course ?? undefined,
+        score: payload.score,
+        max: payload.max,
+        passed: payload.passed,
+        previousPct: payload.previous_pct ?? undefined,
+        challengePct: payload.challenge_pct,
+        presencaPct: payload.presenca_pct,
+        ts: payload.ts,
+      };
+      db.presencaResults = [saved, ...db.presencaResults];
+      saveDB();
+      return res.status(201).json(saved);
     }
 
+    const { data, error } = await sb
+      .from("presenca_results")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Erro ao salvar presenca_result:", error);
+
+      if (error.code === "23505") {
+        return res.status(409).json({ error: "Já submetido" });
+      }
+
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.status(201).json({
+      ...data,
+      previousPct: data.previous_pct,
+      challengePct: data.challenge_pct,
+      presencaPct: data.presenca_pct,
+    });
+  } catch (error: any) {
+    console.error("Erro ao salvar presenca_result:", error);
     return res.status(500).json({ error: error.message });
   }
-
-  res.status(201).json({
-    ...data,
-    previousPct: data.previous_pct,
-    challengePct: data.challenge_pct,
-    presencaPct: data.presenca_pct,
-  });
 });
-app.delete("/api/presenca-results/:id", (req, res) => {
+app.delete("/api/presenca-results/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  db.presencaResults = db.presencaResults.filter((r) => r.id !== id);
-  saveDB();
-  res.json({ ok: true });
+
+  try {
+    await deleteRow("presenca", id);
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error("Erro ao remover presenca_result:", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
 
-app.get("/api/admin-results", (_req, res) => {
-  res.json(buildAdminRows());
+app.get("/api/admin-results", async (_req, res) => {
+  try {
+    const [results, recoveryResults, presencaResults] = await Promise.all([
+      getFullstackResults(),
+      getRecoveryResults(),
+      getPresencaResults(),
+    ]);
+
+    res.json(buildAdminRowsFromData(results, recoveryResults, presencaResults));
+  } catch (error: any) {
+    console.error("Erro ao buscar admin_results:", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
 
-app.delete("/api/admin-results", (req, res) => {
+app.delete("/api/admin-results", async (req, res) => {
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
-  rows.forEach((row: { id?: number; module?: AdminResultRow["module"] }) => {
-    if (typeof row?.id === "number" && row?.module)
-      deleteRow(row.module, row.id);
-  });
-  saveDB();
-  res.json({ ok: true, deleted: rows.length });
+
+  try {
+    await Promise.all(
+      rows.map((row: { id?: number; module?: AdminResultRow["module"] }) => {
+        if (typeof row?.id === "number" && row?.module) {
+          return deleteRow(row.module, row.id);
+        }
+        return Promise.resolve();
+      }),
+    );
+
+    if (!getSupabaseClient()) saveDB();
+    res.json({ ok: true, deleted: rows.length });
+  } catch (error: any) {
+    console.error("Erro ao remover admin_results:", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
 
-app.get("/api/stats", (_req, res) => {
-  const allResults = buildAdminRows();
-  const total = allResults.length;
-  const passed = allResults.filter((r) => r.passed).length;
-  const avg = total
-    ? Math.round(
-        allResults.reduce(
-          (sum, r) => sum + Math.round((r.score / r.max) * 100),
-          0,
-        ) / total,
-      )
-    : 0;
+app.get("/api/stats", async (_req, res) => {
+  try {
+    const [results, recoveryResults, presencaResults] = await Promise.all([
+      getFullstackResults(),
+      getRecoveryResults(),
+      getPresencaResults(),
+    ]);
+    const allResults = buildAdminRowsFromData(
+      results,
+      recoveryResults,
+      presencaResults,
+    );
+    const total = allResults.length;
+    const passed = allResults.filter((r) => r.passed).length;
+    const avg = total
+      ? Math.round(
+          allResults.reduce(
+            (sum, r) => sum + Math.round((r.score / r.max) * 100),
+            0,
+          ) / total,
+        )
+      : 0;
 
-  const cats: Record<string, { correct: number; total: number }> = {};
-  db.results.forEach((r) =>
-    Object.entries(r.cats).forEach(([c, v]) => {
-      if (!cats[c]) cats[c] = { correct: 0, total: 0 };
-      cats[c].correct += v.c;
-      cats[c].total += v.t;
-    }),
-  );
+    const cats: Record<string, { correct: number; total: number }> = {};
+    results.forEach((r) =>
+      Object.entries(r.cats).forEach(([c, v]) => {
+        if (!cats[c]) cats[c] = { correct: 0, total: 0 };
+        cats[c].correct += v.c;
+        cats[c].total += v.t;
+      }),
+    );
 
-  res.json({
-    total,
-    passed,
-    failed: total - passed,
-    avgPct: avg,
-    categories: cats,
-    modules: {
-      fullstack: db.results.length,
-      recovery: db.recoveryResults.length,
-      presenca: db.presencaResults.length,
-    },
-    recovery: {
-      total: db.recoveryResults.length,
-      passed: db.recoveryResults.filter((r) => r.passed).length,
-    },
-    presenca: {
-      total: db.presencaResults.length,
-      avgPct: db.presencaResults.length
-        ? Math.round(
-            db.presencaResults.reduce((s, r) => s + r.presencaPct, 0) /
-              db.presencaResults.length,
-          )
-        : 0,
-    },
-  });
+    res.json({
+      total,
+      passed,
+      failed: total - passed,
+      avgPct: avg,
+      categories: cats,
+      modules: {
+        fullstack: results.length,
+        recovery: recoveryResults.length,
+        presenca: presencaResults.length,
+      },
+      recovery: {
+        total: recoveryResults.length,
+        passed: recoveryResults.filter((r) => r.passed).length,
+      },
+      presenca: {
+        total: presencaResults.length,
+        avgPct: presencaResults.length
+          ? Math.round(
+              presencaResults.reduce((s, r) => s + r.presencaPct, 0) /
+                presencaResults.length,
+            )
+          : 0,
+      },
+    });
+  } catch (error: any) {
+    console.error("Erro ao buscar stats:", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
 app.post("/api/admin-auth", (req, res) => {
   const { email, adminCode } = req.body ?? {};
@@ -501,6 +673,13 @@ app.post("/api/admin-auth", (req, res) => {
 
   res.json({ ok: isValid });
 });
+
+if (!hasSupabaseConfig) {
+  console.warn(
+    "[server] SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY ausentes. Usando persistência local em",
+    DATA_FILE,
+  );
+}
 
 app.listen(PORT, () =>
   console.log(`✅  Desafio GtechRecupera API → http://localhost:${PORT}`),

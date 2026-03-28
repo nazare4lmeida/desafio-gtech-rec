@@ -102,8 +102,17 @@ interface AppCtx {
   setAdminTab: (t: AdminTab) => void;
 }
 
-const Ctx = createContext<AppCtx>(null!);
-export const useApp = () => useContext(Ctx);
+const Ctx = createContext<AppCtx | null>(null);
+
+export const useApp = () => {
+  const context = useContext(Ctx);
+
+  if (!context) {
+    throw new Error("useApp deve ser usado dentro de AppProvider");
+  }
+
+  return context;
+};
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, _setState] = useState<AppState>(loadAppState);

@@ -131,8 +131,10 @@ export default function ProvaRecuperacao() {
   const windowStatus = getWindowStatus(state.user?.email);
   const isAdminUser =
     state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
-  const submissionKey = `recovery_submitted_${state.user?.email}_${WINDOW_OPEN}`;
-  const progressKey = `recovery_progress_${state.user?.email}_${WINDOW_OPEN}`;
+  const ATTEMPT_VERSION = "reset-v5";
+
+  const submissionKey = `recovery_submitted_${state.user?.email}_${ATTEMPT_VERSION}`;
+  const progressKey = `recovery_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
 
   const loadRecoveryProgress = () => {
     try {
@@ -266,7 +268,7 @@ export default function ProvaRecuperacao() {
       );
 
       setFinished(true);
-      window.dispatchEvent(new Event("ddg:update"));
+      window.location.reload();
     } catch (error: any) {
       console.error("Erro ao salvar resultado:", error);
 
