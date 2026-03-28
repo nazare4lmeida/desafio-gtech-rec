@@ -294,61 +294,64 @@ export default function DesafioPresenca() {
     const passed = computedChallengePct >= 60;
 
     setResults(allTestResults);
-    setPrevPct(profile.presencaPct);
-    setChallengePct(computedChallengePct);
-    setNewPct(updatedPct);
-    setSubmitted(true);
+setPrevPct(profile.presencaPct);
+setChallengePct(computedChallengePct);
+setNewPct(updatedPct);
 
-    localStorage.setItem(
-      submissionKey,
-      JSON.stringify({
-        name: state.user!.name,
-        email: state.user!.email,
-        course: state.user!.course,
-        score: passedTests,
-        max: totalTests,
-        passed,
-        newPct: updatedPct,
-        challengePct: computedChallengePct,
-        sendEmail,
-        ts: Date.now(),
-      }),
-    );
+try {
+  await postPresencaResult({
+    name: state.user!.name,
+    email: state.user!.email,
+    course: state.user!.course,
+    score: passedTests,
+    max: totalTests,
+    passed,
+    presencaPct: computedChallengePct,
+    challengePct: computedChallengePct,
+  });
 
-    localStorage.setItem(
-      progressKey,
-      JSON.stringify({
-        started: true,
-        userAnswer,
-        userAnswer2,
-        submitted: true,
-        results: allTestResults,
-        score: passedTests,
-        max: totalTests,
-        passed,
-        newPct: updatedPct,
-        prevPct: profile.presencaPct,
-        challengePct: computedChallengePct,
-      }),
-    );
+  setSubmitted(true);
 
-    try {
-      await postPresencaResult({
-        name: state.user!.name,
-        email: state.user!.email,
-        course: state.user!.course,
-        score: passedTests,
-        max: totalTests,
-        passed,
-        presencaPct: computedChallengePct,
-        challengePct: computedChallengePct,
-      });
-    } catch {
-      // fallback local mantido
-    }
+  localStorage.setItem(
+    submissionKey,
+    JSON.stringify({
+      name: state.user!.name,
+      email: state.user!.email,
+      course: state.user!.course,
+      score: passedTests,
+      max: totalTests,
+      passed,
+      newPct: updatedPct,
+      challengePct: computedChallengePct,
+      sendEmail,
+      ts: Date.now(),
+    }),
+  );
 
-    window.dispatchEvent(new Event("ddg:update"));
+  localStorage.setItem(
+    progressKey,
+    JSON.stringify({
+      started: true,
+      userAnswer,
+      userAnswer2,
+      submitted: true,
+      results: allTestResults,
+      score: passedTests,
+      max: totalTests,
+      passed,
+      newPct: updatedPct,
+      prevPct: profile.presencaPct,
+      challengePct: computedChallengePct,
+    }),
+  );
+
+  window.dispatchEvent(new Event("ddg:update"));
+} catch (error) {
+  console.error("Erro ao salvar resultado:", error);
+  alert("Seu resultado não foi salvo. Tente novamente.");
+}
   };
+
 
   if (windowStatus === "after") {
     return (

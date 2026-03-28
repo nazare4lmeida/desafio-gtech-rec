@@ -96,7 +96,7 @@ interface AppCtx {
   startChallenge: (id: number, layout: Layout) => void;
   addAnswer: (a: Answer) => void;
   addScore: (n: number) => void;
-  finalize: () => void;
+  finalize: () => Promise<void>;
   addResult: (r: StudentResult) => void;
   clearResults: () => void;
   setAdminTab: (t: AdminTab) => void;
@@ -177,7 +177,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     saveResults([]);
   };
 
-  const finalize = () => {
+  const finalize = async () => {
     const cats: Record<string, { c: number; t: number }> = {};
 
     state.answers.forEach((a) => {
@@ -199,18 +199,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ts: Date.now(),
     };
 
-    addResult(result);
-    postResult({
-      name: result.name,
-      email: result.email,
-      score: result.score,
-      max: result.max,
-      passed: result.passed,
-      cats: result.cats,
-    }).catch(() => undefined);
+    try {
+      const saved = await postResult({
+        name: result.name,
+        email: result.email,
+        score: result.score,
+        max: result.max,
+        passed: result.passed,
+        cats: result.cats,
+      });
 
-    window.dispatchEvent(new Event("ddg:update"));
-    setState({ screen: "result" });
+      addResult(saved);
+      window.dispatchEvent(new Event("ddg:update"));
+      setState({ screen: "result" });
+    } catch (error) {
+      console.error("Erro ao salvar resultado:", error);
+      alert("Não foi possível salvar seu resultado. Tente novamente.");
+    }
   };
 
   return (

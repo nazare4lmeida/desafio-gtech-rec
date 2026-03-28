@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { supabase } from "./supabase";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -15,7 +16,9 @@ import {
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
-const DATA_FILE = path.resolve(process.cwd(), "data", "db.json");
+const DATA_FILE =
+  process.env.DATA_FILE_PATH ||
+  path.resolve(__dirname, "..", "data", "db.json");
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -223,12 +226,45 @@ app.put("/api/questions/:id", (req, res) => {
   return res.json(db.questions[idx]);
 });
 
-app.get("/api/results", (_req, res) => res.json(db.results));
-app.post("/api/results", (req, res) => {
-  const r: StudentResult = { ...req.body, id: Date.now(), ts: Date.now() };
-  db.results.push(r);
-  saveDB();
-  res.status(201).json(r);
+app.get("/api/results", async (_req, res) => {
+  const { data, error } = await supabase
+    .from("results")
+    .select("*")
+    .order("ts", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao buscar results:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(data ?? []);
+});
+
+app.post("/api/results", async (req, res) => {
+  const payload = {
+    name: req.body.name,
+    email: String(req.body.email || "")
+      .trim()
+      .toLowerCase(),
+    score: Number(req.body.score) || 0,
+    max: Number(req.body.max) || 0,
+    passed: Boolean(req.body.passed),
+    cats: req.body.cats || {},
+    ts: Date.now(),
+  };
+
+  const { data, error } = await supabase
+    .from("results")
+    .insert(payload)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Erro ao salvar result:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.status(201).json(data);
 });
 app.delete("/api/results", (_req, res) => {
   db.results = [];
@@ -242,35 +278,66 @@ app.delete("/api/results/:id", (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/api/recovery-results", (_req, res) => res.json(db.recoveryResults));
-app.post("/api/recovery-results", (req, res) => {
+app.get("/api/recovery-results", async (_req, res) => {
+  const { data, error } = await supabase
+    .from("recovery_results")
+    .select("*")
+    .order("ts", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao buscar recovery_results:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(
+    (data ?? []).map((r) => ({
+      ...r,
+      projectScore: r.project_score,
+      bestScore: r.best_score,
+    })),
+  );
+});
+
+app.post("/api/recovery-results", async (req, res) => {
   const email = String(req.body.email || "")
     .trim()
     .toLowerCase();
-  const existing = db.recoveryResults.find(
-    (r) => r.email.toLowerCase() === email,
-  );
-  if (existing)
-    return res.status(409).json({ error: "Já submetido", existing });
-
   const score = Number(req.body.score) || 0;
   const projectScore = Number(req.body.projectScore) || 0;
   const bestScore = Math.max(score, projectScore);
-  const course = req.body.course ? String(req.body.course) : undefined;
-  const r: RecoveryResult = {
-    id: Date.now(),
+
+  const payload = {
     name: req.body.name,
     email,
+    course: req.body.course || null,
     score,
-    course,
-    projectScore,
-    bestScore,
+    project_score: projectScore || null,
+    best_score: bestScore,
     passed: bestScore >= 6,
     ts: Date.now(),
   };
-  db.recoveryResults.push(r);
-  saveDB();
-  res.status(201).json(r);
+
+  const { data, error } = await supabase
+    .from("recovery_results")
+    .insert(payload)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Erro ao salvar recovery_result:", error);
+
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "Já submetido" });
+    }
+
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.status(201).json({
+    ...data,
+    projectScore: data.project_score,
+    bestScore: data.best_score,
+  });
 });
 app.delete("/api/recovery-results/:id", (req, res) => {
   const id = parseInt(req.params.id, 10);
@@ -279,50 +346,74 @@ app.delete("/api/recovery-results/:id", (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/api/presenca-results", (_req, res) => res.json(db.presencaResults));
-app.post("/api/presenca-results", (req, res) => {
+app.get("/api/presenca-results", async (_req, res) => {
+  const { data, error } = await supabase
+    .from("presenca_results")
+    .select("*")
+    .order("ts", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao buscar presenca_results:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(
+    (data ?? []).map((r) => ({
+      ...r,
+      previousPct: r.previous_pct,
+      challengePct: r.challenge_pct,
+      presencaPct: r.presenca_pct,
+    })),
+  );
+});
+
+app.post("/api/presenca-results", async (req, res) => {
   const email = String(req.body.email || "")
     .trim()
     .toLowerCase();
-
-  const existing = db.presencaResults.find(
-    (r) => r.email.toLowerCase() === email,
-  );
-
-  if (existing)
-    return res.status(409).json({ error: "Já submetido", existing });
-
   const score = Number(req.body.score) || 0;
-  const max = Number(req.body.max) || 100;
+  const max = Number(req.body.max) || 0;
   const challengePct = Number(req.body.challengePct) || 0;
   const presencaPct = Number(req.body.presencaPct) || challengePct;
-  const passed =
-    typeof req.body.passed === "boolean" ? req.body.passed : presencaPct >= 60;
 
-  const previousPct =
-    req.body.previousPct !== undefined
-      ? Number(req.body.previousPct) || 0
-      : undefined;
-
-  const course = req.body.course ? String(req.body.course) : undefined;
-
-  const r: PresencaResult = {
-    id: Date.now(),
+  const payload = {
     name: req.body.name,
     email,
-    course,
+    course: req.body.course || null,
     score,
     max,
-    passed,
-    previousPct,
-    challengePct,
-    presencaPct,
+    passed: Boolean(req.body.passed),
+    previous_pct:
+      req.body.previousPct !== undefined
+        ? Number(req.body.previousPct) || 0
+        : null,
+    challenge_pct: challengePct,
+    presenca_pct: presencaPct,
     ts: Date.now(),
   };
 
-  db.presencaResults.push(r);
-  saveDB();
-  res.status(201).json(r);
+  const { data, error } = await supabase
+    .from("presenca_results")
+    .insert(payload)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Erro ao salvar presenca_result:", error);
+
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "Já submetido" });
+    }
+
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.status(201).json({
+    ...data,
+    previousPct: data.previous_pct,
+    challengePct: data.challenge_pct,
+    presencaPct: data.presenca_pct,
+  });
 });
 app.delete("/api/presenca-results/:id", (req, res) => {
   const id = parseInt(req.params.id, 10);

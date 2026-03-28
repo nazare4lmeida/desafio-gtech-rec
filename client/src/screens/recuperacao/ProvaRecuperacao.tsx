@@ -229,17 +229,6 @@ export default function ProvaRecuperacao() {
 
     setScore(finalScore);
     setBestScore(finalScore);
-    setFinished(true);
-
-    localStorage.setItem(
-      submissionKey,
-      JSON.stringify({
-        name: state.user!.name,
-        score: finalScore,
-        bestScore: finalScore,
-        ts: Date.now(),
-      }),
-    );
 
     try {
       await postRecoveryResult({
@@ -250,9 +239,21 @@ export default function ProvaRecuperacao() {
         passed: finalScore >= RECOVERY_PASSING_SCORE,
       });
 
+      localStorage.setItem(
+        submissionKey,
+        JSON.stringify({
+          name: state.user!.name,
+          score: finalScore,
+          bestScore: finalScore,
+          ts: Date.now(),
+        }),
+      );
+
+      setFinished(true);
       window.dispatchEvent(new Event("ddg:update"));
     } catch (error) {
       console.error("Erro ao salvar resultado:", error);
+      alert("Seu resultado não foi salvo. Tente novamente.");
     }
   };
 
