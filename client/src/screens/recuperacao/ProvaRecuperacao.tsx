@@ -10,7 +10,7 @@ import {
 } from "../../data/recoveryQuestions";
 import { RecoveryQuestion } from "../../types";
 import { useAntiCheat } from "../../utils/moduleSecurity";
-import { postRecoveryResult } from "../../utils/api";
+import { postRecoveryResult, postResult } from "../../utils/api";
 
 function Countdown({ targetMs }: { targetMs: number }) {
   const [diff, setDiff] = useState(targetMs - Date.now());
@@ -127,7 +127,7 @@ const CAT_COLORS: Record<string, string> = {
 };
 
 export default function ProvaRecuperacao() {
-  const { state, navigate, setAdminTab } = useApp();
+  const { state, navigate, setAdminTab, addResult, db } = useApp();
   const windowStatus = getWindowStatus(state.user?.email);
   const isAdminUser =
     state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
@@ -239,6 +239,22 @@ export default function ProvaRecuperacao() {
         passed: finalScore >= RECOVERY_PASSING_SCORE,
       });
 
+      const saved = await postResult({
+        name: state.user!.name,
+        email: state.user!.email,
+        score: finalScore,
+        max: 10,
+        passed: finalScore >= RECOVERY_PASSING_SCORE,
+        cats: {
+          Recuperacao: {
+            c: finalScore,
+            t: 10,
+          },
+        },
+      });
+
+      addResult(saved);
+
       localStorage.setItem(
         submissionKey,
         JSON.stringify({
@@ -251,8 +267,24 @@ export default function ProvaRecuperacao() {
 
       setFinished(true);
       window.dispatchEvent(new Event("ddg:update"));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao salvar resultado:", error);
+
+      if (error?.response?.status === 409) {
+        localStorage.setItem(
+          submissionKey,
+          JSON.stringify({
+            name: state.user!.name,
+            score: finalScore,
+            bestScore: finalScore,
+            ts: Date.now(),
+          }),
+        );
+
+        setFinished(true);
+        return;
+      }
+
       alert("Seu resultado não foi salvo. Tente novamente.");
     }
   };

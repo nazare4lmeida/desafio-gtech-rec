@@ -7,7 +7,7 @@ import {
   saveStudentProfile,
 } from "../../data/recoveryQuestions";
 import { useAntiCheat } from "../../utils/moduleSecurity";
-import { postPresencaResult } from "../../utils/api";
+import { postPresencaResult, postResult } from "../../utils/api";
 
 function Countdown({ targetMs }: { targetMs: number }) {
   const [diff, setDiff] = useState(targetMs - Date.now());
@@ -207,7 +207,7 @@ function PresCard({
 }
 
 export default function DesafioPresenca() {
-  const { state, navigate, setAdminTab } = useApp();
+  const { state, navigate, setAdminTab, addResult } = useApp();
   const windowStatus = getWindowStatus(state.user?.email);
   const isAdminUser =
     state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
@@ -294,64 +294,119 @@ export default function DesafioPresenca() {
     const passed = computedChallengePct >= 60;
 
     setResults(allTestResults);
-setPrevPct(profile.presencaPct);
-setChallengePct(computedChallengePct);
-setNewPct(updatedPct);
+    setPrevPct(profile.presencaPct);
+    setChallengePct(computedChallengePct);
+    setNewPct(updatedPct);
 
-try {
-  await postPresencaResult({
-    name: state.user!.name,
-    email: state.user!.email,
-    course: state.user!.course,
-    score: passedTests,
-    max: totalTests,
-    passed,
-    presencaPct: computedChallengePct,
-    challengePct: computedChallengePct,
-  });
+    try {
+      await postPresencaResult({
+        name: state.user!.name,
+        email: state.user!.email,
+        course: state.user!.course,
+        score: passedTests,
+        max: totalTests,
+        passed,
+        presencaPct: computedChallengePct,
+        challengePct: computedChallengePct,
+      });
 
-  setSubmitted(true);
+      const saved = await postResult({
+        name: state.user!.name,
+        email: state.user!.email,
+        score: passedTests,
+        max: totalTests,
+        passed,
+        cats: {
+          Presenca: {
+            c: passedTests,
+            t: totalTests,
+          },
+        },
+      });
 
-  localStorage.setItem(
-    submissionKey,
-    JSON.stringify({
-      name: state.user!.name,
-      email: state.user!.email,
-      course: state.user!.course,
-      score: passedTests,
-      max: totalTests,
-      passed,
-      newPct: updatedPct,
-      challengePct: computedChallengePct,
-      sendEmail,
-      ts: Date.now(),
-    }),
-  );
+      addResult(saved);
 
-  localStorage.setItem(
-    progressKey,
-    JSON.stringify({
-      started: true,
-      userAnswer,
-      userAnswer2,
-      submitted: true,
-      results: allTestResults,
-      score: passedTests,
-      max: totalTests,
-      passed,
-      newPct: updatedPct,
-      prevPct: profile.presencaPct,
-      challengePct: computedChallengePct,
-    }),
-  );
+      setSubmitted(true);
 
-  window.dispatchEvent(new Event("ddg:update"));
-} catch (error) {
-  console.error("Erro ao salvar resultado:", error);
-  alert("Seu resultado não foi salvo. Tente novamente.");
-}
+      localStorage.setItem(
+        submissionKey,
+        JSON.stringify({
+          name: state.user!.name,
+          email: state.user!.email,
+          course: state.user!.course,
+          score: passedTests,
+          max: totalTests,
+          passed,
+          newPct: updatedPct,
+          challengePct: computedChallengePct,
+          sendEmail,
+          ts: Date.now(),
+        }),
+      );
+
+      localStorage.setItem(
+        progressKey,
+        JSON.stringify({
+          started: true,
+          userAnswer,
+          userAnswer2,
+          submitted: true,
+          results: allTestResults,
+          score: passedTests,
+          max: totalTests,
+          passed,
+          newPct: updatedPct,
+          prevPct: profile.presencaPct,
+          challengePct: computedChallengePct,
+        }),
+      );
+
+      window.dispatchEvent(new Event("ddg:update"));
+    } catch (error: any) {
+      console.error("Erro ao salvar resultado:", error);
+
+      if (error?.response?.status === 409) {
+        setSubmitted(true);
+
+        localStorage.setItem(
+          submissionKey,
+          JSON.stringify({
+            name: state.user!.name,
+            email: state.user!.email,
+            course: state.user!.course,
+            score: passedTests,
+            max: totalTests,
+            passed,
+            newPct: updatedPct,
+            challengePct: computedChallengePct,
+            sendEmail,
+            ts: Date.now(),
+          }),
+        );
+
+        localStorage.setItem(
+          progressKey,
+          JSON.stringify({
+            started: true,
+            userAnswer,
+            userAnswer2,
+            submitted: true,
+            results: allTestResults,
+            score: passedTests,
+            max: totalTests,
+            passed,
+            newPct: updatedPct,
+            prevPct: profile.presencaPct,
+            challengePct: computedChallengePct,
+          }),
+        );
+
+        return;
+      }
+
+      alert("Seu resultado não foi salvo. Tente novamente.");
+    }
   };
-
 
   if (windowStatus === "after") {
     return (
