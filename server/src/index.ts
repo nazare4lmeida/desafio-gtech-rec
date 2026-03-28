@@ -14,6 +14,7 @@ import {
 } from "./types";
 
 dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 const DATA_FILE =
@@ -29,14 +30,19 @@ const allowedOrigins = [
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
         callback(null, true);
         return;
       }
-      callback(null, false);
+
+      const isAllowed =
+        allowedOrigins.includes(origin) || origin.endsWith(".vercel.app");
+
+      callback(null, isAllowed);
     },
   }),
 );
+
 app.use(express.json());
 
 const DEFAULT_QUESTIONS: Question[] = [
@@ -117,7 +123,11 @@ const DEFAULT_QUESTIONS: Question[] = [
 
 function ensureDataFile() {
   const dir = path.dirname(DATA_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
   if (!fs.existsSync(DATA_FILE)) {
     const initial: PersistedDB = {
       results: [],
@@ -125,23 +135,27 @@ function ensureDataFile() {
       presencaResults: [],
       questions: DEFAULT_QUESTIONS,
     };
+
     fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2), "utf-8");
   }
 }
 
 function loadDB(): PersistedDB {
   ensureDataFile();
+
   try {
     const parsed = JSON.parse(
       fs.readFileSync(DATA_FILE, "utf-8"),
     ) as Partial<PersistedDB>;
+
     return {
       results: parsed.results ?? [],
       recoveryResults: parsed.recoveryResults ?? [],
       presencaResults: parsed.presencaResults ?? [],
-      questions: parsed.questions?.length
-        ? parsed.questions
-        : DEFAULT_QUESTIONS,
+      questions:
+        parsed.questions && parsed.questions.length > 0
+          ? parsed.questions
+          : DEFAULT_QUESTIONS,
     };
   } catch {
     return {
@@ -163,53 +177,117 @@ function getSupabaseClient() {
   return supabase;
 }
 
+function toNumber(value: unknown, fallback = 0): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function toTimestamp(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : Date.now();
+}
+
 async function getFullstackResults(): Promise<StudentResult[]> {
   const sb = getSupabaseClient();
-  if (!sb) return db.results;
+
+  if (!sb) {
+    return db.results;
+  }
 
   const { data, error } = await sb
     .from("results")
     .select("*")
     .order("ts", { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
+
   return (data ?? []) as StudentResult[];
 }
 
 async function getRecoveryResults(): Promise<RecoveryResult[]> {
   const sb = getSupabaseClient();
-  if (!sb) return db.recoveryResults;
+
+  if (!sb) {
+    return db.recoveryResults;
+  }
 
   const { data, error } = await sb
     .from("recovery_results")
     .select("*")
     .order("ts", { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
-  return (data ?? []).map((r) => ({
-    ...r,
-    projectScore: r.project_score,
-    bestScore: r.best_score,
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    course: "recuperacao",
+    score: toNumber(r.score),
+    passed: Boolean(r.passed),
+    ts: toTimestamp(r.ts),
+    projectScore:
+      r.projectScore !== undefined
+        ? toNumber(r.projectScore)
+        : r.project_score !== null && r.project_score !== undefined
+          ? toNumber(r.project_score)
+          : undefined,
+    bestScore:
+      r.bestScore !== undefined
+        ? toNumber(r.bestScore)
+        : r.best_score !== null && r.best_score !== undefined
+          ? toNumber(r.best_score)
+          : Math.max(toNumber(r.score), toNumber(r.project_score)),
   })) as RecoveryResult[];
 }
 
 async function getPresencaResults(): Promise<PresencaResult[]> {
   const sb = getSupabaseClient();
-  if (!sb) return db.presencaResults;
+
+  if (!sb) {
+    return db.presencaResults;
+  }
 
   const { data, error } = await sb
     .from("presenca_results")
     .select("*")
     .order("ts", { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
-  return (data ?? []).map((r) => ({
-    ...r,
-    previousPct: r.previous_pct,
-    challengePct: r.challenge_pct,
-    presencaPct: r.presenca_pct,
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    course: "presenca",
+    score: toNumber(r.score),
+    max: toNumber(r.max, 4),
+    passed: Boolean(r.passed),
+    ts: toTimestamp(r.ts),
+    previousPct:
+      r.previousPct !== undefined
+        ? toNumber(r.previousPct)
+        : r.previous_pct !== null && r.previous_pct !== undefined
+          ? toNumber(r.previous_pct)
+          : undefined,
+    challengePct:
+      r.challengePct !== undefined
+        ? toNumber(r.challengePct)
+        : r.challenge_pct !== null && r.challenge_pct !== undefined
+          ? toNumber(r.challenge_pct)
+          : undefined,
+    presencaPct:
+      r.presencaPct !== undefined
+        ? toNumber(r.presencaPct)
+        : r.presenca_pct !== null && r.presenca_pct !== undefined
+          ? toNumber(r.presenca_pct)
+          : undefined,
   })) as PresencaResult[];
 }
 
@@ -222,47 +300,66 @@ function buildAdminRowsFromData(
     id: r.id,
     name: r.name,
     email: r.email,
-    score: r.score,
-    max: r.max,
-    passed: r.passed,
-    ts: r.ts,
+    score: toNumber(r.score),
+    max: toNumber(r.max, 10),
+    passed: Boolean(r.passed),
+    ts: toTimestamp(r.ts),
     module: "fullstack",
     moduleLabel: "Teste Full-Stack",
   }));
 
-  const recovery: AdminResultRow[] = recoveryResults.map((r) => ({
-    id: r.id,
-    name: r.name,
-    email: r.email,
-    score: r.bestScore ?? r.score,
-    max: 10,
-    passed: r.passed,
-    ts: r.ts,
-    module: "recuperacao",
-    moduleLabel: "Prova de Recuperação",
-  }));
+  const recovery: AdminResultRow[] = recoveryResults.map((r) => {
+    const bestScore =
+      typeof r.bestScore === "number"
+        ? r.bestScore
+        : Math.max(toNumber(r.score), toNumber(r.projectScore));
 
-  const presenca: AdminResultRow[] = presencaResults.map((r) => ({
-    id: r.id,
-    name: r.name,
-    email: r.email,
-    score:
-      typeof r.score === "number" ? r.score : (r.challengePct ?? r.presencaPct),
-    max: typeof r.max === "number" ? r.max : 100,
-    passed:
-      typeof r.passed === "boolean"
-        ? r.passed
-        : (r.challengePct ?? r.presencaPct) >= 60,
-    ts: r.ts,
-    module: "presenca",
-    moduleLabel: "Desafio Presença",
-  }));
+    return {
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      score: bestScore,
+      max: 10,
+      passed: Boolean(r.passed ?? bestScore >= 6),
+      ts: toTimestamp(r.ts),
+      module: "recuperacao",
+      moduleLabel: "Prova de Recuperação",
+    };
+  });
 
-  return [...fullstack, ...recovery, ...presenca].sort((a, b) => b.ts - a.ts);
+  const presenca: AdminResultRow[] = presencaResults.map((r) => {
+    const score =
+      typeof r.score === "number"
+        ? r.score
+        : typeof r.challengePct === "number"
+          ? r.challengePct
+          : typeof r.presencaPct === "number"
+            ? r.presencaPct
+            : 0;
+
+    const max = typeof r.max === "number" && r.max > 0 ? r.max : 4;
+
+    return {
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      score,
+      max,
+      passed: Boolean(r.passed),
+      ts: toTimestamp(r.ts),
+      module: "presenca",
+      moduleLabel: "Desafio Presença",
+    };
+  });
+
+  return [...recovery, ...presenca].sort(
+    (a, b) => toTimestamp(b.ts) - toTimestamp(a.ts),
+  );
 }
 
 async function deleteRow(module: AdminResultRow["module"], id: number) {
   const sb = getSupabaseClient();
+
   if (sb) {
     const table =
       module === "fullstack"
@@ -272,29 +369,48 @@ async function deleteRow(module: AdminResultRow["module"], id: number) {
           : "presenca_results";
 
     const { error } = await sb.from(table).delete().eq("id", id);
-    if (error) throw error;
+
+    if (error) {
+      throw error;
+    }
+
     return;
   }
 
-  if (module === "fullstack")
+  if (module === "fullstack") {
     db.results = db.results.filter((r) => r.id !== id);
-  if (module === "recuperacao")
+  }
+
+  if (module === "recuperacao") {
     db.recoveryResults = db.recoveryResults.filter((r) => r.id !== id);
-  if (module === "presenca")
+  }
+
+  if (module === "presenca") {
     db.presencaResults = db.presencaResults.filter((r) => r.id !== id);
+  }
+
+  saveDB();
 }
 
-app.get("/api/health", (_req, res) =>
-  res.json({ status: "ok", ts: Date.now() }),
-);
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", ts: Date.now() });
+});
 
-app.get("/api/questions", (_req, res) => res.json(db.questions));
+app.get("/api/questions", (_req, res) => {
+  res.json(db.questions);
+});
+
 app.put("/api/questions/:id", (req, res) => {
   const id = parseInt(req.params.id, 10);
   const idx = db.questions.findIndex((q) => q.id === id);
-  if (idx < 0) return res.status(404).json({ error: "Not found" });
+
+  if (idx < 0) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
   db.questions[idx] = { ...db.questions[idx], ...req.body, id };
   saveDB();
+
   return res.json(db.questions[idx]);
 });
 
@@ -308,59 +424,34 @@ app.get("/api/results", async (_req, res) => {
   }
 });
 
-app.post("/api/results", async (req, res) => {
-  const payload = {
-    name: req.body.name,
-    email: String(req.body.email || "")
-      .trim()
-      .toLowerCase(),
-    score: Number(req.body.score) || 0,
-    max: Number(req.body.max) || 0,
-    passed: Boolean(req.body.passed),
-    cats: req.body.cats || {},
-    ts: Date.now(),
-  };
-
-  try {
-    const sb = getSupabaseClient();
-
-    if (!sb) {
-      const nextId = db.results.reduce((max, item) => Math.max(max, item.id), 0) + 1;
-      const saved = { ...payload, id: nextId };
-      db.results = [saved, ...db.results];
-      saveDB();
-      return res.status(201).json(saved);
-    }
-
-    const { data, error } = await sb.from("results").insert(payload).select().single();
-
-    if (error) {
-      console.error("Erro ao salvar result:", error);
-      return res.status(500).json({ error: error.message });
-    }
-
-    res.status(201).json(data);
-  } catch (error: any) {
-    console.error("Erro ao salvar result:", error);
-    return res.status(500).json({ error: error.message });
-  }
+app.post("/api/results", async (_req, res) => {
+  console.warn("[api/results] rota de fullstack desativada");
+  return res.status(410).json({
+    error: "Teste Full-Stack desativado temporariamente.",
+  });
 });
+
 app.delete("/api/results", async (_req, res) => {
   try {
     const sb = getSupabaseClient();
+
     if (sb) {
       const { error } = await sb.from("results").delete().gte("id", 0);
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     } else {
       db.results = [];
       saveDB();
     }
+
     res.json({ ok: true });
   } catch (error: any) {
     console.error("Erro ao limpar results:", error);
     return res.status(500).json({ error: error.message });
   }
 });
+
 app.delete("/api/results/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
 
@@ -384,19 +475,17 @@ app.get("/api/recovery-results", async (_req, res) => {
 });
 
 app.post("/api/recovery-results", async (req, res) => {
-  const email = String(req.body.email || "")
-    .trim()
-    .toLowerCase();
-  const score = Number(req.body.score) || 0;
-  const projectScore = Number(req.body.projectScore) || 0;
+  const email = String(req.body.email ?? "").trim().toLowerCase();
+  const score = toNumber(req.body.score);
+  const projectScore = toNumber(req.body.projectScore);
   const bestScore = Math.max(score, projectScore);
 
   const payload = {
-    name: req.body.name,
+    name: String(req.body.name ?? "").trim(),
     email,
-    course: req.body.course || null,
+    course: "recuperacao",
     score,
-    project_score: projectScore || null,
+    project_score: projectScore,
     best_score: bestScore,
     passed: bestScore >= 6,
     ts: Date.now(),
@@ -406,20 +495,27 @@ app.post("/api/recovery-results", async (req, res) => {
     const sb = getSupabaseClient();
 
     if (!sb) {
-      const nextId = db.recoveryResults.reduce((max, item) => Math.max(max, item.id), 0) + 1;
-      const saved = {
+      const nextId =
+        db.recoveryResults.reduce(
+          (maxId, item) => Math.max(maxId, item.id),
+          0,
+        ) + 1;
+
+      const saved: RecoveryResult = {
         id: nextId,
         name: payload.name,
         email: payload.email,
-        course: payload.course ?? undefined,
+        course: "recuperacao",
         score: payload.score,
         passed: payload.passed,
         ts: payload.ts,
-        projectScore: payload.project_score ?? undefined,
+        projectScore: payload.project_score,
         bestScore: payload.best_score,
       };
+
       db.recoveryResults = [saved, ...db.recoveryResults];
       saveDB();
+
       return res.status(201).json(saved);
     }
 
@@ -439,8 +535,9 @@ app.post("/api/recovery-results", async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       ...data,
+      course: "recuperacao",
       projectScore: data.project_score,
       bestScore: data.best_score,
     });
@@ -449,6 +546,7 @@ app.post("/api/recovery-results", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
 app.delete("/api/recovery-results/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
 
@@ -472,24 +570,28 @@ app.get("/api/presenca-results", async (_req, res) => {
 });
 
 app.post("/api/presenca-results", async (req, res) => {
-  const email = String(req.body.email || "")
-    .trim()
-    .toLowerCase();
-  const score = Number(req.body.score) || 0;
-  const max = Number(req.body.max) || 0;
-  const challengePct = Number(req.body.challengePct) || 0;
-  const presencaPct = Number(req.body.presencaPct) || challengePct;
+  const email = String(req.body.email ?? "").trim().toLowerCase();
+  const score = toNumber(req.body.score);
+  const max = toNumber(req.body.max, 4);
+  const challengePct = toNumber(req.body.challengePct);
+  const presencaPct =
+    req.body.presencaPct !== undefined
+      ? toNumber(req.body.presencaPct)
+      : challengePct;
 
   const payload = {
-    name: req.body.name,
+    name: String(req.body.name ?? "").trim(),
     email,
-    course: req.body.course || null,
+    course: "presenca",
     score,
     max,
-    passed: Boolean(req.body.passed),
+    passed:
+      typeof req.body.passed === "boolean"
+        ? req.body.passed
+        : score >= Math.ceil(max * 0.6),
     previous_pct:
       req.body.previousPct !== undefined
-        ? Number(req.body.previousPct) || 0
+        ? toNumber(req.body.previousPct)
         : null,
     challenge_pct: challengePct,
     presenca_pct: presencaPct,
@@ -500,22 +602,30 @@ app.post("/api/presenca-results", async (req, res) => {
     const sb = getSupabaseClient();
 
     if (!sb) {
-      const nextId = db.presencaResults.reduce((maxId, item) => Math.max(maxId, item.id), 0) + 1;
-      const saved = {
+      const nextId =
+        db.presencaResults.reduce(
+          (maxId, item) => Math.max(maxId, item.id),
+          0,
+        ) + 1;
+
+      const saved: PresencaResult = {
         id: nextId,
         name: payload.name,
         email: payload.email,
-        course: payload.course ?? undefined,
+        course: "presenca",
         score: payload.score,
         max: payload.max,
         passed: payload.passed,
-        previousPct: payload.previous_pct ?? undefined,
+        previousPct:
+          payload.previous_pct === null ? undefined : payload.previous_pct,
         challengePct: payload.challenge_pct,
         presencaPct: payload.presenca_pct,
         ts: payload.ts,
       };
+
       db.presencaResults = [saved, ...db.presencaResults];
       saveDB();
+
       return res.status(201).json(saved);
     }
 
@@ -535,8 +645,9 @@ app.post("/api/presenca-results", async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       ...data,
+      course: "presenca",
       previousPct: data.previous_pct,
       challengePct: data.challenge_pct,
       presencaPct: data.presenca_pct,
@@ -546,6 +657,7 @@ app.post("/api/presenca-results", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
 app.delete("/api/presenca-results/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
 
@@ -566,7 +678,13 @@ app.get("/api/admin-results", async (_req, res) => {
       getPresencaResults(),
     ]);
 
-    res.json(buildAdminRowsFromData(results, recoveryResults, presencaResults));
+    const rows = buildAdminRowsFromData(
+      results,
+      recoveryResults,
+      presencaResults,
+    );
+
+    res.json(rows);
   } catch (error: any) {
     console.error("Erro ao buscar admin_results:", error);
     return res.status(500).json({ error: error.message });
@@ -582,11 +700,11 @@ app.delete("/api/admin-results", async (req, res) => {
         if (typeof row?.id === "number" && row?.module) {
           return deleteRow(row.module, row.id);
         }
+
         return Promise.resolve();
       }),
     );
 
-    if (!getSupabaseClient()) saveDB();
     res.json({ ok: true, deleted: rows.length });
   } catch (error: any) {
     console.error("Erro ao remover admin_results:", error);
@@ -601,36 +719,43 @@ app.get("/api/stats", async (_req, res) => {
       getRecoveryResults(),
       getPresencaResults(),
     ]);
+
     const allResults = buildAdminRowsFromData(
       results,
       recoveryResults,
       presencaResults,
     );
+
     const total = allResults.length;
     const passed = allResults.filter((r) => r.passed).length;
-    const avg = total
+
+    const avgPct = total
       ? Math.round(
-          allResults.reduce(
-            (sum, r) => sum + Math.round((r.score / r.max) * 100),
-            0,
-          ) / total,
+          allResults.reduce((sum, r) => {
+            const pct = r.max > 0 ? Math.round((r.score / r.max) * 100) : 0;
+            return sum + pct;
+          }, 0) / total,
         )
       : 0;
 
     const cats: Record<string, { correct: number; total: number }> = {};
-    results.forEach((r) =>
-      Object.entries(r.cats).forEach(([c, v]) => {
-        if (!cats[c]) cats[c] = { correct: 0, total: 0 };
-        cats[c].correct += v.c;
-        cats[c].total += v.t;
-      }),
-    );
+
+    results.forEach((r) => {
+      Object.entries(r.cats || {}).forEach(([category, value]) => {
+        if (!cats[category]) {
+          cats[category] = { correct: 0, total: 0 };
+        }
+
+        cats[category].correct += toNumber((value as any).c);
+        cats[category].total += toNumber((value as any).t);
+      });
+    });
 
     res.json({
       total,
       passed,
       failed: total - passed,
-      avgPct: avg,
+      avgPct,
       categories: cats,
       modules: {
         fullstack: results.length,
@@ -645,8 +770,21 @@ app.get("/api/stats", async (_req, res) => {
         total: presencaResults.length,
         avgPct: presencaResults.length
           ? Math.round(
-              presencaResults.reduce((s, r) => s + r.presencaPct, 0) /
-                presencaResults.length,
+              presencaResults.reduce((sum, r) => {
+                if (typeof r.presencaPct === "number") {
+                  return sum + r.presencaPct;
+                }
+
+                if (typeof r.challengePct === "number") {
+                  return sum + r.challengePct;
+                }
+
+                if (r.max > 0) {
+                  return sum + Math.round((r.score / r.max) * 100);
+                }
+
+                return sum;
+              }, 0) / presencaResults.length,
             )
           : 0,
       },
@@ -656,19 +794,15 @@ app.get("/api/stats", async (_req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
 app.post("/api/admin-auth", (req, res) => {
   const { email, adminCode } = req.body ?? {};
 
-  const normalizedEmail = String(email ?? "")
-    .toLowerCase()
-    .trim();
+  const normalizedEmail = String(email ?? "").toLowerCase().trim();
   const normalizedCode = String(adminCode ?? "").trim();
 
   const isValid =
-    normalizedEmail ===
-      String(process.env.ADMIN_EMAIL ?? "")
-        .toLowerCase()
-        .trim() &&
+    normalizedEmail === String(process.env.ADMIN_EMAIL ?? "").toLowerCase().trim() &&
     normalizedCode === String(process.env.ADMIN_ACCESS_CODE ?? "").trim();
 
   res.json({ ok: isValid });
@@ -681,7 +815,8 @@ if (!hasSupabaseConfig) {
   );
 }
 
-app.listen(PORT, () =>
-  console.log(`✅  Desafio GtechRecupera API → http://localhost:${PORT}`),
-);
+app.listen(PORT, () => {
+  console.log(`✅  Desafio GtechRecupera API → http://localhost:${PORT}`);
+});
+
 export default app;

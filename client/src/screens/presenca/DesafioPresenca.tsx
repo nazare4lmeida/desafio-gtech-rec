@@ -4,23 +4,26 @@ import {
   WINDOW_OPEN,
   getStudentProfile,
   getWindowStatus,
-  saveStudentProfile,
 } from "../../data/recoveryQuestions";
 import { useAntiCheat } from "../../utils/moduleSecurity";
-import { postPresencaResult, postResult } from "../../utils/api";
+import { postPresencaResult } from "../../utils/api";
 
 function Countdown({ targetMs }: { targetMs: number }) {
   const [diff, setDiff] = useState(targetMs - Date.now());
+
   useEffect(() => {
     const id = setInterval(() => setDiff(targetMs - Date.now()), 1000);
     return () => clearInterval(id);
   }, [targetMs]);
+
   if (diff <= 0) return null;
+
   const s = Math.floor(diff / 1000);
   const d = Math.floor(s / 86400);
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
+
   return (
     <div className="flex gap-3 justify-center mt-4">
       {d > 0 && <U v={d} label="dias" />}
@@ -30,6 +33,7 @@ function Countdown({ targetMs }: { targetMs: number }) {
     </div>
   );
 }
+
 function U({ v, label }: { v: number; label: string }) {
   return (
     <div className="flex flex-col items-center bg-[#E0EDF8] rounded-xl px-4 py-2 min-w-[56px]">
@@ -84,6 +88,7 @@ interface CodeLine {
   editable: boolean;
   placeholder?: string;
 }
+
 interface TestCase {
   input: any;
   expected: any;
@@ -146,7 +151,7 @@ const CHALLENGE_2_LINES: CodeLine[] = [
   { id: 8, content: "}", editable: false },
 ];
 
-const TEST_CASES_2 = [
+const TEST_CASES_2: TestCase[] = [
   {
     input: "hello world",
     expected: "HELLO WORLD",
@@ -198,7 +203,9 @@ function PresCard({
 }) {
   return (
     <div
-      className={`flex-1 rounded-xl border p-4 text-center ${highlight ? "border-green bg-green-bg" : "border-border bg-[#EFF4FA]"}`}
+      className={`flex-1 rounded-xl border p-4 text-center ${
+        highlight ? "border-green bg-green-bg" : "border-border bg-[#EFF4FA]"
+      }`}
     >
       <p className="text-xs text-muted mb-1">{label}</p>
       <p className={`font-mono text-2xl font-bold ${color}`}>{value}</p>
@@ -207,14 +214,14 @@ function PresCard({
 }
 
 export default function DesafioPresenca() {
-  const { state, navigate, setAdminTab, addResult } = useApp();
+  const { state, navigate, setAdminTab } = useApp();
   const windowStatus = getWindowStatus(state.user?.email);
   const isAdminUser =
     state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
   const ATTEMPT_VERSION = "reset-v5";
 
-const submissionKey = `presenca_submitted_${state.user?.email}_${ATTEMPT_VERSION}`;
-const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
+  const submissionKey = `presenca_submitted_${state.user?.email}_${ATTEMPT_VERSION}`;
+  const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
 
   const loadPresencaProgress = () => {
     try {
@@ -238,7 +245,7 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
   const [prevPct, setPrevPct] = useState(saved?.prevPct ?? 0);
   const [challengePct, setChallengePct] = useState(saved?.challengePct ?? 0);
   const [alreadyDone, setAlreadyDone] = useState(false);
-  const [sendEmail, setSendEmail] = useState(true);
+  const [sendEmail] = useState(true);
 
   useAntiCheat(
     started && !submitted,
@@ -251,6 +258,7 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
 
   useEffect(() => {
     if (!state.user) return;
+
     localStorage.setItem(
       progressKey,
       JSON.stringify({
@@ -267,6 +275,7 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
   }, [
     started,
     userAnswer,
+    userAnswer2,
     submitted,
     results,
     newPct,
@@ -312,22 +321,6 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
         challengePct: computedChallengePct,
       });
 
-      const saved = await postResult({
-        name: state.user!.name,
-        email: state.user!.email,
-        score: passedTests,
-        max: totalTests,
-        passed,
-        cats: {
-          Presenca: {
-            c: passedTests,
-            t: totalTests,
-          },
-        },
-      });
-
-      addResult(saved);
-
       setSubmitted(true);
 
       localStorage.setItem(
@@ -363,50 +356,11 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
         }),
       );
 
+      window.dispatchEvent(new Event("ddg:update"));
       window.location.reload();
     } catch (error: any) {
       console.error("Erro ao salvar resultado:", error);
-
-      if (error?.response?.status === 409) {
-        setSubmitted(true);
-
-        localStorage.setItem(
-          submissionKey,
-          JSON.stringify({
-            name: state.user!.name,
-            email: state.user!.email,
-            course: state.user!.course,
-            score: passedTests,
-            max: totalTests,
-            passed,
-            newPct: updatedPct,
-            challengePct: computedChallengePct,
-            sendEmail,
-            ts: Date.now(),
-          }),
-        );
-
-        localStorage.setItem(
-          progressKey,
-          JSON.stringify({
-            started: true,
-            userAnswer,
-            userAnswer2,
-            submitted: true,
-            results: allTestResults,
-            score: passedTests,
-            max: totalTests,
-            passed,
-            newPct: updatedPct,
-            prevPct: profile.presencaPct,
-            challengePct: computedChallengePct,
-          }),
-        );
-
-        return;
-      }
-
-      alert("Seu resultado não foi salvo. Tente novamente.");
+      alert("Não foi possível salvar seu resultado. Tente novamente.");
     }
   };
 
@@ -437,11 +391,14 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
 
   if (alreadyDone && !submitted) {
     const stored = JSON.parse(localStorage.getItem(submissionKey) || "{}");
+
     return (
       <WindowMessage
         icon="✅"
         title="Desafio já realizado"
-        desc={`Sua presença considerada pelo Desafio ficou em ${stored.newPct ?? "?"}%. Mas o que vale é a porcentagem mais alta entre a sua presença atual e a do desafio.`}
+        desc={`Sua presença considerada pelo Desafio ficou em ${
+          stored.newPct ?? "?"
+        }%. Mas o que vale é a porcentagem mais alta entre a sua presença atual e a do desafio.`}
         color="text-green"
         onBack={() => navigate("select")}
       />
@@ -491,6 +448,7 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
           <div className="rounded-xl p-4 text-sm mb-5 bg-[#EFF4FA] text-muted">
             Sua pontuação final neste desafio foi de {challengePct}%.
           </div>
+
           <div className="bg-[#EFF4FA] rounded-xl p-4 mb-5">
             <p className="text-xs font-bold text-muted uppercase tracking-wide mb-2">
               Casos de teste
@@ -499,7 +457,11 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
               {results.map((result) => (
                 <div
                   key={result.label}
-                  className={`rounded-lg px-3 py-2 text-sm border ${result.pass ? "bg-green-bg border-green/20 text-green" : "bg-red-bg border-red/20 text-red"}`}
+                  className={`rounded-lg px-3 py-2 text-sm border ${
+                    result.pass
+                      ? "bg-green-bg border-green/20 text-green"
+                      : "bg-red-bg border-red/20 text-red"
+                  }`}
                 >
                   {result.pass ? "✅" : "❌"} {result.label}
                 </div>
@@ -533,8 +495,9 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
           </h2>
           <p className="text-muted text-sm mt-2 mb-5 leading-relaxed">
             Complete a função JavaScript que filtra números pares.
-            <br />O percentual de acertos vira sua nova presença, mas sempre
-            prevalece a maior.
+            <br />
+            O percentual de acertos vira sua nova presença, mas sempre prevalece
+            a maior.
           </p>
           <div className="grid grid-cols-2 gap-3 text-left mb-5">
             {[
@@ -607,6 +570,7 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
           ← Voltar
         </button>
       </div>
+
       <div className="bg-surface rounded-card border border-border shadow-card p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-[#E0EDF8] flex items-center justify-center text-xl">
@@ -650,7 +614,11 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
                     />
                   ) : (
                     <span
-                      className={`${line.content.startsWith("//") ? "text-sky/50" : "text-sky"}`}
+                      className={`${
+                        line.content.startsWith("//")
+                          ? "text-sky/50"
+                          : "text-sky"
+                      }`}
                     >
                       {line.content || "\u00A0"}
                     </span>
@@ -687,7 +655,11 @@ const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
                     />
                   ) : (
                     <span
-                      className={`${line.content.startsWith("//") ? "text-sky/50" : "text-sky"}`}
+                      className={`${
+                        line.content.startsWith("//")
+                          ? "text-sky/50"
+                          : "text-sky"
+                      }`}
                     >
                       {line.content || "\u00A0"}
                     </span>

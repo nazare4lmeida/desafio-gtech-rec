@@ -6,24 +6,27 @@ import {
   WINDOW_OPEN,
   getStudentProfile,
   getWindowStatus,
-  saveStudentProfile,
 } from "../../data/recoveryQuestions";
 import { RecoveryQuestion } from "../../types";
 import { useAntiCheat } from "../../utils/moduleSecurity";
-import { postRecoveryResult, postResult } from "../../utils/api";
+import { postRecoveryResult } from "../../utils/api";
 
 function Countdown({ targetMs }: { targetMs: number }) {
   const [diff, setDiff] = useState(targetMs - Date.now());
+
   useEffect(() => {
     const id = setInterval(() => setDiff(targetMs - Date.now()), 1000);
     return () => clearInterval(id);
   }, [targetMs]);
+
   if (diff <= 0) return null;
+
   const s = Math.floor(diff / 1000);
   const d = Math.floor(s / 86400);
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
+
   return (
     <div className="flex gap-3 justify-center mt-4">
       {d > 0 && <CUnit v={d} label="dias" />}
@@ -33,6 +36,7 @@ function Countdown({ targetMs }: { targetMs: number }) {
     </div>
   );
 }
+
 function CUnit({ v, label }: { v: number; label: string }) {
   return (
     <div className="flex flex-col items-center bg-[#E0EDF8] rounded-xl px-4 py-2 min-w-[56px]">
@@ -127,7 +131,7 @@ const CAT_COLORS: Record<string, string> = {
 };
 
 export default function ProvaRecuperacao() {
-  const { state, navigate, setAdminTab, addResult, db } = useApp();
+  const { state, navigate, setAdminTab } = useApp();
   const windowStatus = getWindowStatus(state.user?.email);
   const isAdminUser =
     state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
@@ -162,7 +166,6 @@ export default function ProvaRecuperacao() {
     saved?.bestScore ?? saved?.score ?? 0,
   );
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
-  const [sendEmail, setSendEmail] = useState(true);
 
   useAntiCheat(
     started && !finished,
@@ -175,6 +178,7 @@ export default function ProvaRecuperacao() {
 
   useEffect(() => {
     if (!state.user) return;
+
     localStorage.setItem(
       progressKey,
       JSON.stringify({
@@ -225,6 +229,7 @@ export default function ProvaRecuperacao() {
 
     const finalAnswers = [...answers];
     finalAnswers[current] = selected;
+
     const finalScore = finalAnswers.filter(
       (answer, index) => answer === RECOVERY_QUESTIONS[index].correct,
     ).length;
@@ -241,22 +246,6 @@ export default function ProvaRecuperacao() {
         passed: finalScore >= RECOVERY_PASSING_SCORE,
       });
 
-      const saved = await postResult({
-        name: state.user!.name,
-        email: state.user!.email,
-        score: finalScore,
-        max: 10,
-        passed: finalScore >= RECOVERY_PASSING_SCORE,
-        cats: {
-          Recuperacao: {
-            c: finalScore,
-            t: 10,
-          },
-        },
-      });
-
-      addResult(saved);
-
       localStorage.setItem(
         submissionKey,
         JSON.stringify({
@@ -268,6 +257,7 @@ export default function ProvaRecuperacao() {
       );
 
       setFinished(true);
+      window.dispatchEvent(new Event("ddg:update"));
       window.location.reload();
     } catch (error: any) {
       console.error("Erro ao salvar resultado:", error);
@@ -321,6 +311,7 @@ export default function ProvaRecuperacao() {
 
   if (alreadySubmitted && !finished) {
     const stored = JSON.parse(localStorage.getItem(submissionKey) || "{}");
+
     return (
       <WindowMessage
         icon="✅"
@@ -351,27 +342,38 @@ export default function ProvaRecuperacao() {
             </button>
           </div>
         )}
+
         <div className="bg-surface rounded-card border border-border shadow-card-lg p-8">
           <div className="text-center mb-6">
             <div
-              className={`w-28 h-28 rounded-full border-4 flex flex-col items-center justify-center mx-auto mb-4 ${passed ? "border-green bg-green-bg" : "border-red bg-red-bg"}`}
+              className={`w-28 h-28 rounded-full border-4 flex flex-col items-center justify-center mx-auto mb-4 ${
+                passed ? "border-green bg-green-bg" : "border-red bg-red-bg"
+              }`}
             >
               <span
-                className={`font-mono text-[1.9rem] font-bold ${passed ? "text-green" : "text-red"}`}
+                className={`font-mono text-[1.9rem] font-bold ${
+                  passed ? "text-green" : "text-red"
+                }`}
               >
                 {score * 10}%
               </span>
               <span
-                className={`text-[.65rem] font-bold uppercase tracking-wide ${passed ? "text-green" : "text-red"}`}
+                className={`text-[.65rem] font-bold uppercase tracking-wide ${
+                  passed ? "text-green" : "text-red"
+                }`}
               >
                 {score}/10
               </span>
             </div>
+
             <span
-              className={`inline-block px-5 py-1 rounded-full font-bold text-[.84rem] uppercase tracking-wide ${passed ? "bg-green-bg text-green" : "bg-red-bg text-red"}`}
+              className={`inline-block px-5 py-1 rounded-full font-bold text-[.84rem] uppercase tracking-wide ${
+                passed ? "bg-green-bg text-green" : "bg-red-bg text-red"
+              }`}
             >
               {passed ? "✅ Aprovado" : "❌ Reprovado"}
             </span>
+
             <p className="text-navy font-semibold mt-2">{state.user!.name}</p>
             <p className="text-muted text-sm">
               {new Date().toLocaleDateString("pt-BR", {
@@ -408,6 +410,7 @@ export default function ProvaRecuperacao() {
               Continue estudando — você consegue! 💪
             </div>
           )}
+
           <button
             onClick={() => {
               localStorage.removeItem(progressKey);
@@ -429,9 +432,11 @@ export default function ProvaRecuperacao() {
           <div className="w-16 h-16 rounded-2xl bg-[#FEF5E0] flex items-center justify-center text-3xl mx-auto mb-4">
             📝
           </div>
+
           <h2 className="font-display text-2xl font-extrabold text-navy">
             Prova de Recuperação
           </h2>
+
           <p className="text-muted text-sm mt-2 mb-6 leading-relaxed">
             10 questões objetivas sobre HTML, CSS, React, JavaScript e Banco de
             Dados.
@@ -442,6 +447,7 @@ export default function ProvaRecuperacao() {
               Apenas uma tentativa permitida.
             </span>
           </p>
+
           <div className="grid grid-cols-2 gap-3 text-left mb-6">
             {[
               ["📌", "10 questões", "Múltipla escolha"],
@@ -461,10 +467,12 @@ export default function ProvaRecuperacao() {
               </div>
             ))}
           </div>
+
           <div className="bg-[#FDEAEA] border border-red/20 rounded-xl p-3 text-xs text-red mb-5">
             ⚠️ Não copie, cole, selecione texto, tente imprimir ou saia da aba
             durante a prova.
           </div>
+
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => navigate("select")}
@@ -501,6 +509,7 @@ export default function ProvaRecuperacao() {
               Prova de Recuperação
             </h2>
           </div>
+
           <span
             className={`px-3 py-1 rounded-full text-[.74rem] font-bold ${CAT_COLORS[q.category]}`}
           >
@@ -527,6 +536,7 @@ export default function ProvaRecuperacao() {
         <div className="grid gap-3 mb-6">
           {q.options.map((option, index) => {
             const active = selected === index;
+
             return (
               <button
                 key={option}
@@ -554,6 +564,7 @@ export default function ProvaRecuperacao() {
           >
             Sair
           </button>
+
           <div className="flex gap-3">
             <button
               onClick={handleConfirm}
@@ -562,6 +573,7 @@ export default function ProvaRecuperacao() {
             >
               Confirmar resposta
             </button>
+
             <button
               onClick={() => void handleNext()}
               disabled={!confirmed}

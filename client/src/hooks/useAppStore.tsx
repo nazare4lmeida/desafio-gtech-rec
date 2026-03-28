@@ -24,7 +24,7 @@ import {
   RECS,
   DEFAULT_APPROVAL_THRESHOLD,
 } from "../data/seed";
-import { fetchResults, postResult } from "../utils/api";
+import { fetchResults } from "../utils/api";
 
 interface DB {
   questions: Question[];
@@ -187,44 +187,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const finalize = async () => {
-    const cats: Record<string, { c: number; t: number }> = {};
-
-    state.answers.forEach((a) => {
-      if (!cats[a.category]) cats[a.category] = { c: 0, t: 0 };
-      cats[a.category].t++;
-      if (a.correct) cats[a.category].c++;
-    });
-
-    const pct = Math.round((state.score / 7) * 100);
-
-    const result: StudentResult = {
-      id: Date.now(),
-      name: state.user!.name,
-      email: state.user!.email,
-      score: state.score,
-      max: 7,
-      passed: pct >= db.approvalThreshold,
-      cats,
-      ts: Date.now(),
-    };
-
-    try {
-      const saved = await postResult({
-        name: result.name,
-        email: result.email,
-        score: result.score,
-        max: result.max,
-        passed: result.passed,
-        cats: result.cats,
-      });
-
-      addResult(saved);
-      window.dispatchEvent(new Event("ddg:update"));
-      setState({ screen: "result" });
-    } catch (error) {
-      console.error("Erro ao salvar resultado:", error);
-      alert("Não foi possível salvar seu resultado. Tente novamente.");
-    }
+    setState({ screen: "result" });
   };
 
   return (
