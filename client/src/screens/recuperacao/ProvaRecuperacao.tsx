@@ -347,8 +347,8 @@ export default function ProvaRecuperacao() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="rounded-xl bg-[#EFF4FA] p-4 text-center">
+          <div className="flex justify-center mb-5">
+            <div className="w-full max-w-[260px] rounded-xl bg-[#EFF4FA] p-4 text-center">
               <p className="text-xs text-muted mb-1">Nota da prova</p>
               <p className="font-mono text-2xl font-bold text-green">
                 {score}/10
