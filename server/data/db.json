@@ -1,28 +1,16 @@
 {
   "results": [],
-  "recoveryResults": [
-    {
-      "id": 1774696391270,
-      "name": "Nazare Almeida",
-      "email": "nazyalmeida@gmail.com",
-      "score": 8,
-      "course": "fullstack",
-      "projectScore": 0,
-      "bestScore": 8,
-      "passed": true,
-      "ts": 1774696391270
-    }
-  ],
+  "recoveryResults": [],
   "presencaResults": [
     {
-      "id": 1774696461622,
+      "id": 1774698519287,
       "name": "Nazare Almeida",
       "email": "nazyalmeida@gmail.com",
       "course": "fullstack",
       "previousPct": 0,
-      "challengePct": 100,
-      "presencaPct": 100,
-      "ts": 1774696461622
+      "challengePct": 25,
+      "presencaPct": 25,
+      "ts": 1774698519287
     }
   ],
   "questions": [

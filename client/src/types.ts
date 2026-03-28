@@ -63,6 +63,14 @@ export interface PresencaResult {
   id: number;
   name: string;
   email: string;
+  course?: string;
+
+  score?: number;
+  max?: number;
+  passed?: boolean;
+
+  previousPct?: number;
+  challengePct?: number;
   presencaPct: number;
   ts: number;
 }

@@ -185,27 +185,6 @@ function arrEq(a: any, b: number[]) {
   );
 }
 
-function EligRow({
-  label,
-  value,
-  ok,
-}: {
-  label: string;
-  value: string;
-  ok: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-center justify-between p-3 rounded-xl border ${ok ? "border-green bg-green-bg" : "border-red bg-red-bg"}`}
-    >
-      <span className="text-sm font-medium text-navy">{label}</span>
-      <span className={`font-bold text-sm ${ok ? "text-green" : "text-red"}`}>
-        {value} {ok ? "✅" : "❌"}
-      </span>
-    </div>
-  );
-}
-
 function PresCard({
   label,
   value,
@@ -295,85 +274,81 @@ export default function DesafioPresenca() {
     state.user,
   ]);
 
-  const meetsPresenca = profile.presencaPct >= 30;
-  const meetsCourse = profile.coursePct >= 50;
-  const eligible = meetsPresenca && meetsCourse;
+  const handleSubmit = async () => {
+    const results1 = TEST_CASES.map((tc) => ({
+      pass: arrEq(evalCode(userAnswer, tc.input, "numeros"), tc.expected),
+      label: tc.label,
+    }));
 
-const handleSubmit = async () => {
-  const results1 = TEST_CASES.map((tc) => ({
-    pass: arrEq(evalCode(userAnswer, tc.input, "numeros"), tc.expected),
-    label: tc.label,
-  }));
+    const results2 = TEST_CASES_2.map((tc) => ({
+      pass: evalCode(userAnswer2, tc.input, "texto") === tc.expected,
+      label: tc.label,
+    }));
 
-  const results2 = TEST_CASES_2.map((tc) => ({
-    pass: evalCode(userAnswer2, tc.input, "texto") === tc.expected,
-    label: tc.label,
-  }));
+    const allTestResults = [...results1, ...results2];
+    const totalTests = TEST_CASES.length + TEST_CASES_2.length;
+    const passedTests = allTestResults.filter((result) => result.pass).length;
 
-  const allTestResults = [...results1, ...results2];
-  const totalTests = TEST_CASES.length + TEST_CASES_2.length;
-  const passedTests = allTestResults.filter((result) => result.pass).length;
+    const computedChallengePct = Math.round((passedTests / totalTests) * 100);
+    const updatedPct = computedChallengePct;
+    const passed = computedChallengePct >= 60;
 
-  const computedChallengePct = Math.round((passedTests / totalTests) * 100);
-  const updatedPct = computedChallengePct;
-  const passed = computedChallengePct >= 60;
+    setResults(allTestResults);
+    setPrevPct(profile.presencaPct);
+    setChallengePct(computedChallengePct);
+    setNewPct(updatedPct);
+    setSubmitted(true);
 
-  setResults(allTestResults);
-  setPrevPct(profile.presencaPct);
-  setChallengePct(computedChallengePct);
-  setNewPct(updatedPct);
-  setSubmitted(true);
+    localStorage.setItem(
+      submissionKey,
+      JSON.stringify({
+        name: state.user!.name,
+        email: state.user!.email,
+        course: state.user!.course,
+        score: passedTests,
+        max: totalTests,
+        passed,
+        newPct: updatedPct,
+        challengePct: computedChallengePct,
+        sendEmail,
+        ts: Date.now(),
+      }),
+    );
 
-  localStorage.setItem(
-    submissionKey,
-    JSON.stringify({
-      name: state.user!.name,
-      email: state.user!.email,
-      course: state.user!.course,
-      score: passedTests,
-      max: totalTests,
-      passed,
-      newPct: updatedPct,
-      challengePct: computedChallengePct,
-      sendEmail,
-      ts: Date.now(),
-    }),
-  );
+    localStorage.setItem(
+      progressKey,
+      JSON.stringify({
+        started: true,
+        userAnswer,
+        userAnswer2,
+        submitted: true,
+        results: allTestResults,
+        score: passedTests,
+        max: totalTests,
+        passed,
+        newPct: updatedPct,
+        prevPct: profile.presencaPct,
+        challengePct: computedChallengePct,
+      }),
+    );
 
-  localStorage.setItem(
-    progressKey,
-    JSON.stringify({
-      started: true,
-      userAnswer,
-      userAnswer2,
-      submitted: true,
-      results: allTestResults,
-      score: passedTests,
-      max: totalTests,
-      passed,
-      newPct: updatedPct,
-      prevPct: profile.presencaPct,
-      challengePct: computedChallengePct,
-    }),
-  );
+    try {
+      await postPresencaResult({
+        name: state.user!.name,
+        email: state.user!.email,
+        course: state.user!.course,
+        score: passedTests,
+        max: totalTests,
+        passed,
+        presencaPct: computedChallengePct,
+        challengePct: computedChallengePct,
+      });
+    } catch {
+      // fallback local mantido
+    }
 
-  try {
-    await postPresencaResult({
-      name: state.user!.name,
-      email: state.user!.email,
-      course: state.user!.course,
-      score: passedTests,
-      max: totalTests,
-      passed,
-      presencaPct: computedChallengePct,
-      challengePct: computedChallengePct,
-    });
-  } catch {
-    // fallback local mantido
-  }
-
-  window.dispatchEvent(new Event("ddg:update"));
-};
+    window.dispatchEvent(new Event("ddg:update"));
+  };
 
   if (windowStatus === "after") {
     return (
@@ -413,64 +388,10 @@ const handleSubmit = async () => {
     );
   }
 
-  if (!eligible) {
-    return (
-      <div className="w-full max-w-[480px] animate-scale-in">
-        {isAdminUser && (
-          <div className="mb-4 flex justify-end">
-            <button
-              onClick={() => {
-                setAdminTab("dashboard");
-                navigate("admin");
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy text-white text-sm font-semibold shadow-sm hover:bg-blue transition-all duration-200"
-            >
-              ← Voltar para Admin
-            </button>
-          </div>
-        )}
-        <div className="bg-surface rounded-card border border-border shadow-card p-10 text-center">
-          <div className="text-5xl mb-4">🚫</div>
-          <h2 className="font-display text-xl font-extrabold text-red mb-2">
-            Acesso Bloqueado
-          </h2>
-          <p className="text-muted text-sm mb-5">
-            Você não atende aos requisitos mínimos para o Desafio Presença.
-          </p>
-          <div className="flex flex-col gap-3 text-left mb-6">
-            <EligRow
-              label="Presença atual ≥ 30%"
-              value={`${profile.presencaPct}%`}
-              ok={meetsPresenca}
-            />
-            <EligRow
-              label="Progresso do curso ≥ 50%"
-              value={`${profile.coursePct}%`}
-              ok={meetsCourse}
-            />
-          </div>
-          <p className="text-xs text-muted mb-6">
-            Complete mais aulas e aumente sua presença para desbloquear este
-            desafio.
-          </p>
-          <button
-            onClick={() => {
-              localStorage.removeItem(progressKey);
-              navigate("select");
-            }}
-            className="px-6 py-2.5 bg-navy text-white font-semibold rounded-xl text-sm hover:bg-blue transition-all"
-          >
-            ← Voltar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (submitted) {
     return (
       <div
-        className="w-full max-w-[520px] animate-scale-in"
+        className="w-full max-w-[520px] mx-auto animate-scale-in text-center"
         style={{ userSelect: "none" }}
       >
         <div className="bg-surface rounded-card border border-border shadow-card-lg p-8">
@@ -599,11 +520,33 @@ const handleSubmit = async () => {
 
   return (
     <div
-      className="w-full max-w-[680px] animate-fade-up"
+      className="w-full max-w-[680px] mx-auto animate-fade-up"
       onCopy={(e) => e.preventDefault()}
       onPaste={(e) => e.preventDefault()}
       style={{ userSelect: "none" }}
     >
+      <div className="mb-4 flex justify-between items-center">
+        {isAdminUser ? (
+          <button
+            onClick={() => {
+              setAdminTab("dashboard");
+              navigate("admin");
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy text-white text-sm font-semibold shadow-sm hover:bg-blue transition-all duration-200"
+          >
+            ← Voltar para Admin
+          </button>
+        ) : (
+          <div />
+        )}
+
+        <button
+          onClick={() => navigate("select")}
+          className="px-4 py-2 border border-navy text-navy font-semibold rounded-xl text-sm hover:bg-navy hover:text-white transition-all"
+        >
+          ← Voltar
+        </button>
+      </div>
       <div className="bg-surface rounded-card border border-border shadow-card p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-[#E0EDF8] flex items-center justify-center text-xl">

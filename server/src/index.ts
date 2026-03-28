@@ -185,9 +185,13 @@ function buildAdminRows(): AdminResultRow[] {
     id: r.id,
     name: r.name,
     email: r.email,
-    score: r.presencaPct,
-    max: 100,
-    passed: true,
+    score:
+      typeof r.score === "number" ? r.score : (r.challengePct ?? r.presencaPct),
+    max: typeof r.max === "number" ? r.max : 100,
+    passed:
+      typeof r.passed === "boolean"
+        ? r.passed
+        : (r.challengePct ?? r.presencaPct) >= 60,
     ts: r.ts,
     module: "presenca",
     moduleLabel: "Desafio Presença",
@@ -280,30 +284,42 @@ app.post("/api/presenca-results", (req, res) => {
   const email = String(req.body.email || "")
     .trim()
     .toLowerCase();
+
   const existing = db.presencaResults.find(
     (r) => r.email.toLowerCase() === email,
   );
+
   if (existing)
     return res.status(409).json({ error: "Já submetido", existing });
 
-  const previousPct = Number(req.body.previousPct) || 0;
+  const score = Number(req.body.score) || 0;
+  const max = Number(req.body.max) || 100;
   const challengePct = Number(req.body.challengePct) || 0;
-  const presencaPct = Math.max(
-    previousPct,
-    Number(req.body.presencaPct) || 0,
-    challengePct,
-  );
+  const presencaPct = Number(req.body.presencaPct) || challengePct;
+  const passed =
+    typeof req.body.passed === "boolean" ? req.body.passed : presencaPct >= 60;
+
+  const previousPct =
+    req.body.previousPct !== undefined
+      ? Number(req.body.previousPct) || 0
+      : undefined;
+
   const course = req.body.course ? String(req.body.course) : undefined;
+
   const r: PresencaResult = {
     id: Date.now(),
     name: req.body.name,
     email,
     course,
+    score,
+    max,
+    passed,
     previousPct,
     challengePct,
     presencaPct,
     ts: Date.now(),
   };
+
   db.presencaResults.push(r);
   saveDB();
   res.status(201).json(r);

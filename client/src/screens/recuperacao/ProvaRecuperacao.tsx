@@ -300,8 +300,7 @@ export default function ProvaRecuperacao() {
   if (finished) {
     return (
       <div
-        className="w-full max-w-[540px] animate-scale-in"
-        onCopy={(e) => e.preventDefault()}
+        className="w-full max-w-[520px] mx-auto animate-scale-in text-center"
         style={{ userSelect: "none" }}
       >
         {isAdminUser && (
