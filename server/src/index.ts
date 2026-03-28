@@ -475,7 +475,9 @@ app.get("/api/recovery-results", async (_req, res) => {
 });
 
 app.post("/api/recovery-results", async (req, res) => {
-  const email = String(req.body.email ?? "").trim().toLowerCase();
+  const email = String(req.body.email ?? "")
+    .trim()
+    .toLowerCase();
   const score = toNumber(req.body.score);
   const projectScore = toNumber(req.body.projectScore);
   const bestScore = Math.max(score, projectScore);
@@ -570,7 +572,9 @@ app.get("/api/presenca-results", async (_req, res) => {
 });
 
 app.post("/api/presenca-results", async (req, res) => {
-  const email = String(req.body.email ?? "").trim().toLowerCase();
+  const email = String(req.body.email ?? "")
+    .trim()
+    .toLowerCase();
   const score = toNumber(req.body.score);
   const max = toNumber(req.body.max, 4);
   const challengePct = toNumber(req.body.challengePct);
@@ -779,8 +783,11 @@ app.get("/api/stats", async (_req, res) => {
                   return sum + r.challengePct;
                 }
 
-                if (r.max > 0) {
-                  return sum + Math.round((r.score / r.max) * 100);
+                const score = typeof r.score === "number" ? r.score : 0;
+                const max = typeof r.max === "number" && r.max > 0 ? r.max : 0;
+
+                if (max > 0) {
+                  return sum + Math.round((score / max) * 100);
                 }
 
                 return sum;
@@ -798,11 +805,16 @@ app.get("/api/stats", async (_req, res) => {
 app.post("/api/admin-auth", (req, res) => {
   const { email, adminCode } = req.body ?? {};
 
-  const normalizedEmail = String(email ?? "").toLowerCase().trim();
+  const normalizedEmail = String(email ?? "")
+    .toLowerCase()
+    .trim();
   const normalizedCode = String(adminCode ?? "").trim();
 
   const isValid =
-    normalizedEmail === String(process.env.ADMIN_EMAIL ?? "").toLowerCase().trim() &&
+    normalizedEmail ===
+      String(process.env.ADMIN_EMAIL ?? "")
+        .toLowerCase()
+        .trim() &&
     normalizedCode === String(process.env.ADMIN_ACCESS_CODE ?? "").trim();
 
   res.json({ ok: isValid });
