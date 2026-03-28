@@ -299,76 +299,81 @@ export default function DesafioPresenca() {
   const meetsCourse = profile.coursePct >= 50;
   const eligible = meetsPresenca && meetsCourse;
 
-  const handleSubmit = async () => {
-    // Avalia o Desafio 1 (Array)
-    const results1 = TEST_CASES.map((tc) => ({
-      pass: arrEq(evalCode(userAnswer, tc.input, "numeros"), tc.expected),
-      label: tc.label,
-    }));
+const handleSubmit = async () => {
+  const results1 = TEST_CASES.map((tc) => ({
+    pass: arrEq(evalCode(userAnswer, tc.input, "numeros"), tc.expected),
+    label: tc.label,
+  }));
 
-    // Avalia o Desafio 2 (String/Hello World)
-    const results2 = TEST_CASES_2.map((tc) => ({
-      pass: evalCode(userAnswer2, tc.input, "texto") === tc.expected,
-      label: tc.label,
-    }));
+  const results2 = TEST_CASES_2.map((tc) => ({
+    pass: evalCode(userAnswer2, tc.input, "texto") === tc.expected,
+    label: tc.label,
+  }));
 
-    // Combina todos os resultados
-    const allTestResults = [...results1, ...results2];
-    const totalTests = TEST_CASES.length + TEST_CASES_2.length;
-    const passedTests = allTestResults.filter((result) => result.pass).length;
+  const allTestResults = [...results1, ...results2];
+  const totalTests = TEST_CASES.length + TEST_CASES_2.length;
+  const passedTests = allTestResults.filter((result) => result.pass).length;
 
-    const computedChallengePct = Math.round((passedTests / totalTests) * 100);
-    const updatedPct = computedChallengePct;
+  const computedChallengePct = Math.round((passedTests / totalTests) * 100);
+  const updatedPct = computedChallengePct;
+  const passed = computedChallengePct >= 60;
 
-    setResults(allTestResults);
-    setPrevPct(profile.presencaPct);
-    setChallengePct(computedChallengePct);
-    setNewPct(updatedPct);
-    setSubmitted(true);
+  setResults(allTestResults);
+  setPrevPct(profile.presencaPct);
+  setChallengePct(computedChallengePct);
+  setNewPct(updatedPct);
+  setSubmitted(true);
 
-    localStorage.setItem(
-      submissionKey,
-      JSON.stringify({
-        name: state.user!.name,
-        email: state.user!.email,
-        course: state.user!.course,
-        newPct: updatedPct,
-        challengePct: computedChallengePct,
-        sendEmail,
-        ts: Date.now(),
-      }),
-    );
+  localStorage.setItem(
+    submissionKey,
+    JSON.stringify({
+      name: state.user!.name,
+      email: state.user!.email,
+      course: state.user!.course,
+      score: passedTests,
+      max: totalTests,
+      passed,
+      newPct: updatedPct,
+      challengePct: computedChallengePct,
+      sendEmail,
+      ts: Date.now(),
+    }),
+  );
 
-    localStorage.setItem(
-      progressKey,
-      JSON.stringify({
-        started: true,
-        userAnswer,
-        userAnswer2, // Adicionado para persistência
-        submitted: true,
-        results: allTestResults,
-        newPct: updatedPct,
-        prevPct: profile.presencaPct,
-        challengePct: computedChallengePct,
-      }),
-    );
+  localStorage.setItem(
+    progressKey,
+    JSON.stringify({
+      started: true,
+      userAnswer,
+      userAnswer2,
+      submitted: true,
+      results: allTestResults,
+      score: passedTests,
+      max: totalTests,
+      passed,
+      newPct: updatedPct,
+      prevPct: profile.presencaPct,
+      challengePct: computedChallengePct,
+    }),
+  );
 
-    saveStudentProfile(state.user!.email, { presencaPct: updatedPct });
+  try {
+    await postPresencaResult({
+      name: state.user!.name,
+      email: state.user!.email,
+      course: state.user!.course,
+      score: passedTests,
+      max: totalTests,
+      passed,
+      presencaPct: computedChallengePct,
+      challengePct: computedChallengePct,
+    });
+  } catch {
+    // fallback local mantido
+  }
 
-    try {
-      await postPresencaResult({
-        name: state.user!.name,
-        email: state.user!.email,
-        course: state.user!.course,
-        presencaPct: computedChallengePct,
-        challengePct: computedChallengePct,
-      });
-    } catch {
-      // fallback local mantido
-    }
-
-    window.dispatchEvent(new Event("ddg:update"));
-  };
+  window.dispatchEvent(new Event("ddg:update"));
+};
 
   if (windowStatus === "after") {
     return (
