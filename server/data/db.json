@@ -2,46 +2,27 @@
   "results": [],
   "recoveryResults": [
     {
-      "id": 1774621113551,
-      "name": "Nazare Teste",
-      "email": "granizos.neve@gmail.com",
-      "score": 9,
-      "projectScore": 0,
-      "bestScore": 9,
-      "passed": true,
-      "ts": 1774621113551
-    },
-    {
-      "id": 1774692821120,
+      "id": 1774696391270,
       "name": "Nazare Almeida",
       "email": "nazyalmeida@gmail.com",
       "score": 8,
       "course": "fullstack",
-      "projectScore": 8,
+      "projectScore": 0,
       "bestScore": 8,
       "passed": true,
-      "ts": 1774692821120
+      "ts": 1774696391270
     }
   ],
   "presencaResults": [
     {
-      "id": 1774621231777,
-      "name": "Nazare Teste",
-      "email": "granizos.neve@gmail.com",
-      "previousPct": 100,
-      "challengePct": 100,
-      "presencaPct": 100,
-      "ts": 1774621231777
-    },
-    {
-      "id": 1774696250593,
+      "id": 1774696461622,
       "name": "Nazare Almeida",
       "email": "nazyalmeida@gmail.com",
       "course": "fullstack",
       "previousPct": 0,
       "challengePct": 100,
       "presencaPct": 100,
-      "ts": 1774696250594
+      "ts": 1774696461622
     }
   ],
   "questions": [
