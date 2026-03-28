@@ -156,19 +156,30 @@ const TEST_CASES_2 = [
 
 function evalCode(code: string, input: any, paramName: string): any {
   try {
+    const normalizedCode = code.trim();
+
     const fn = new Function(
       paramName,
-      code.trimStart().startsWith("return") ? code : `return ${code}`,
+      normalizedCode.startsWith("return")
+        ? normalizedCode
+        : `return ${normalizedCode}`,
     );
+
     return fn(input);
-  } catch {
-    return null;
+  } catch (error) {
+    console.error("Erro ao avaliar código:", {
+      code,
+      input,
+      paramName,
+      error,
+    });
+    return "__EVAL_ERROR__";
   }
 }
 
-function arrEq(a: number[] | null, b: number[]) {
+function arrEq(a: any, b: number[]) {
   return (
-    !!a &&
+    Array.isArray(a) &&
     a.length === b.length &&
     a.every((value, index) => value === b[index])
   );
@@ -349,8 +360,7 @@ export default function DesafioPresenca() {
         name: state.user!.name,
         email: state.user!.email,
         course: state.user!.course,
-        presencaPct: updatedPct,
-        previousPct: profile.presencaPct,
+        presencaPct: computedChallengePct,
         challengePct: computedChallengePct,
       });
     } catch {
@@ -453,7 +463,6 @@ export default function DesafioPresenca() {
   }
 
   if (submitted) {
-    const improved = newPct > prevPct;
     return (
       <div
         className="w-full max-w-[520px] animate-scale-in"
@@ -474,37 +483,28 @@ export default function DesafioPresenca() {
               Resultado do Desafio Presença
             </h2>
             <p className="text-muted text-sm mt-1">
-              Seu resultado final foi calculado com base nos acertos do desafio. No entanto, leve em consideração a maior nota que tiver.
+              Seu resultado final foi calculado com base nos acertos do desafio.
+              No entanto, leve em consideração a maior nota que tiver.
             </p>
           </div>
 
           <div className="flex gap-3 mb-5">
             <PresCard
-              label="Presença anterior"
-              value={`${prevPct}%`}
+              label="Testes corretos"
+              value={`${results.filter((r) => r.pass).length}/${TEST_CASES.length + TEST_CASES_2.length}`}
               color="text-navy"
             />
             <PresCard
-              label="Acerto no desafio"
+              label="Pontuação final"
               value={`${challengePct}%`}
-              color="text-blue"
-            />
-            <PresCard
-              label="Presença final"
-              value={`${newPct}%`}
               color="text-green"
               highlight
             />
           </div>
 
-          <div
-            className={`rounded-xl p-4 text-sm mb-5 ${improved ? "bg-green-bg text-green" : "bg-[#EFF4FA] text-muted"}`}
-          >
-            {improved
-              ? `Sua presença subiu de ${prevPct}% para ${newPct}% com base no desafio.`
-              : `Sua presença permanece em ${newPct}% porque a regra aplica sempre a maior porcentagem.`}
+          <div className="rounded-xl p-4 text-sm mb-5 bg-[#EFF4FA] text-muted">
+            Sua pontuação final neste desafio foi de {challengePct}%.
           </div>
-
           <div className="bg-[#EFF4FA] rounded-xl p-4 mb-5">
             <p className="text-xs font-bold text-muted uppercase tracking-wide mb-2">
               Casos de teste

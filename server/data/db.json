@@ -32,6 +32,16 @@
       "challengePct": 100,
       "presencaPct": 100,
       "ts": 1774621231777
+    },
+    {
+      "id": 1774696250593,
+      "name": "Nazare Almeida",
+      "email": "nazyalmeida@gmail.com",
+      "course": "fullstack",
+      "previousPct": 0,
+      "challengePct": 100,
+      "presencaPct": 100,
+      "ts": 1774696250594
     }
   ],
   "questions": [
