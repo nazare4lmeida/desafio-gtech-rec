@@ -154,10 +154,10 @@ const TEST_CASES_2 = [
   },
 ];
 
-function evalCode(code: string, input: any): any {
+function evalCode(code: string, input: any, paramName: string): any {
   try {
     const fn = new Function(
-      "val", // mudamos de 'numeros' para 'val' para ser genérico
+      paramName,
       code.trimStart().startsWith("return") ? code : `return ${code}`,
     );
     return fn(input);
@@ -291,13 +291,13 @@ export default function DesafioPresenca() {
   const handleSubmit = async () => {
     // Avalia o Desafio 1 (Array)
     const results1 = TEST_CASES.map((tc) => ({
-      pass: arrEq(evalCode(userAnswer, tc.input), tc.expected),
+      pass: arrEq(evalCode(userAnswer, tc.input, "numeros"), tc.expected),
       label: tc.label,
     }));
 
     // Avalia o Desafio 2 (String/Hello World)
     const results2 = TEST_CASES_2.map((tc) => ({
-      pass: evalCode(userAnswer2, tc.input) === tc.expected,
+      pass: evalCode(userAnswer2, tc.input, "texto") === tc.expected,
       label: tc.label,
     }));
 
@@ -391,7 +391,7 @@ export default function DesafioPresenca() {
       <WindowMessage
         icon="✅"
         title="Desafio já realizado"
-        desc={`Sua presença considerada nesta janela ficou em ${stored.newPct ?? "?"}%. Acerto bruto do desafio: ${stored.challengePct ?? "?"}%.`}
+        desc={`Sua presença considerada pelo Desafio ficou em ${stored.newPct ?? "?"}%. Mas o que vale é a porcentagem mais alta entre a sua presença atual e a do desafio.`}
         color="text-green"
         onBack={() => navigate("select")}
       />
@@ -438,17 +438,6 @@ export default function DesafioPresenca() {
             Complete mais aulas e aumente sua presença para desbloquear este
             desafio.
           </p>
-          <label className="flex items-start gap-3 mt-6 p-4 rounded-2xl border border-border bg-white">
-            <input
-              type="checkbox"
-              checked={sendEmail}
-              onChange={(e) => setSendEmail(e.target.checked)}
-              className="mt-1"
-            />
-            <span className="text-sm text-muted leading-6">
-              Quero receber meu resultado por email.
-            </span>
-          </label>
           <button
             onClick={() => {
               localStorage.removeItem(progressKey);
@@ -474,7 +463,7 @@ export default function DesafioPresenca() {
           <div className="text-center mb-6">
             <div className="w-24 h-24 rounded-full border-4 border-blue bg-[#E0EDF8] flex flex-col items-center justify-center mx-auto mb-4">
               <span className="font-mono text-2xl font-bold text-blue">
-                {results.filter((r) => r.pass).length}/{TEST_CASES.length}
+                {results.filter((r) => r.pass).length}/{TEST_CASES.length + TEST_CASES_2.length}
               </span>
               <span className="text-[.6rem] text-blue font-bold uppercase">
                 testes

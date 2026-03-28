@@ -10,6 +10,17 @@
       "bestScore": 9,
       "passed": true,
       "ts": 1774621113551
+    },
+    {
+      "id": 1774692821120,
+      "name": "Nazare Almeida",
+      "email": "nazyalmeida@gmail.com",
+      "score": 8,
+      "course": "fullstack",
+      "projectScore": 8,
+      "bestScore": 8,
+      "passed": true,
+      "ts": 1774692821120
     }
   ],
   "presencaResults": [

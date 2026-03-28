@@ -157,7 +157,7 @@ export default function ProvaRecuperacao() {
   const [finished, setFinished] = useState(saved?.finished ?? false);
   const [score, setScore] = useState(saved?.score ?? 0);
   const [bestScore, setBestScore] = useState(
-    saved?.bestScore ?? Math.max(profile.projectScore, saved?.score ?? 0),
+    saved?.bestScore ?? saved?.score ?? 0,
   );
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [sendEmail, setSendEmail] = useState(true);
@@ -226,10 +226,9 @@ export default function ProvaRecuperacao() {
     const finalScore = finalAnswers.filter(
       (answer, index) => answer === RECOVERY_QUESTIONS[index].correct,
     ).length;
-    const effectiveBest = Math.max(profile.projectScore, finalScore);
 
     setScore(finalScore);
-    setBestScore(effectiveBest);
+    setBestScore(finalScore);
     setFinished(true);
 
     localStorage.setItem(
@@ -237,21 +236,19 @@ export default function ProvaRecuperacao() {
       JSON.stringify({
         name: state.user!.name,
         score: finalScore,
-        bestScore: effectiveBest,
+        bestScore: finalScore,
         ts: Date.now(),
       }),
     );
-    saveStudentProfile(state.user!.email, { projectScore: effectiveBest });
 
     try {
-await postRecoveryResult({
-  name: state.user!.name,
-  email: state.user!.email,
-  course: state.user!.course,
-  score: finalScore,
-  passed: finalScore >= RECOVERY_PASSING_SCORE,
-  projectScore: effectiveBest,
-});
+      await postRecoveryResult({
+        name: state.user!.name,
+        email: state.user!.email,
+        course: state.user!.course,
+        score: finalScore,
+        passed: finalScore >= RECOVERY_PASSING_SCORE,
+      });
 
       window.dispatchEvent(new Event("ddg:update"));
     } catch (error) {
@@ -259,7 +256,8 @@ await postRecoveryResult({
     }
   };
 
-  const passed = bestScore >= RECOVERY_PASSING_SCORE;
+  const finalDisplayedScore = bestScore;
+  const passed = finalDisplayedScore >= RECOVERY_PASSING_SCORE;
 
   if (windowStatus === "after") {
     return (
@@ -292,7 +290,7 @@ await postRecoveryResult({
       <WindowMessage
         icon="✅"
         title="Prova já realizada"
-        desc={`Você já enviou sua prova nesta janela com ${stored.score ?? "?"} /10. Nota considerada: ${stored.bestScore ?? stored.score ?? "?"} /10.`}
+        desc={`Você já enviou sua prova nesta janela com nota final de ${stored.score ?? "?"}/10.`}
         color="text-green"
         onBack={() => navigate("select")}
       />
@@ -327,12 +325,12 @@ await postRecoveryResult({
               <span
                 className={`font-mono text-[1.9rem] font-bold ${passed ? "text-green" : "text-red"}`}
               >
-                {bestScore * 10}%
+                {score * 10}%
               </span>
               <span
                 className={`text-[.65rem] font-bold uppercase tracking-wide ${passed ? "text-green" : "text-red"}`}
               >
-                {bestScore}/10
+                {score}/10
               </span>
             </div>
             <span
@@ -353,28 +351,21 @@ await postRecoveryResult({
           <div className="grid grid-cols-2 gap-3 mb-5">
             <div className="rounded-xl bg-[#EFF4FA] p-4 text-center">
               <p className="text-xs text-muted mb-1">Nota da prova</p>
-              <p className="font-mono text-2xl font-bold text-navy">
-                {score}/10
-              </p>
-            </div>
-            <div className="rounded-xl bg-[#EFF4FA] p-4 text-center">
-              <p className="text-xs text-muted mb-1">Maior nota considerada</p>
               <p className="font-mono text-2xl font-bold text-green">
-                {bestScore}/10
+                {score}/10
               </p>
             </div>
           </div>
 
           <div className="bg-[#EFF4FA] rounded-xl p-4 mb-5 text-sm text-muted">
-            A maior nota entre o{" "}
-            <strong>projeto ({profile.projectScore}/10)</strong> e a{" "}
-            <strong>prova ({score}/10)</strong> foi considerada automaticamente.
+            Sua nota final corresponde ao total de acertos obtidos na prova ou à
+            maior nota que tiver.
           </div>
 
           {passed ? (
             <>
               <div className="h-px bg-border my-5" />
-              <Certificate name={state.user!.name} score={bestScore} />
+              <Certificate name={state.user!.name} score={score} />
             </>
           ) : (
             <div className="bg-[#FDEAEA] border border-red/20 rounded-xl p-4 text-center text-sm text-red mt-2">
@@ -383,18 +374,6 @@ await postRecoveryResult({
               Continue estudando — você consegue! 💪
             </div>
           )}
-          <label className="flex items-start gap-3 mt-6 p-4 rounded-2xl border border-border bg-white">
-            <input
-              type="checkbox"
-              checked={sendEmail}
-              onChange={(e) => setSendEmail(e.target.checked)}
-              className="mt-1"
-            />
-            <span className="text-sm text-muted leading-6">
-              Quero receber meu resultado por email.
-            </span>
-          </label>
-
           <button
             onClick={() => {
               localStorage.removeItem(progressKey);
