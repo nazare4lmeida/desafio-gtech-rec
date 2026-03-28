@@ -1,7 +1,17 @@
 import axios from 'axios'
-import { AdminResultRow, AdminStats, PresencaResult, Question, RecoveryResult, StudentResult } from '../types'
+import {
+  AdminResultRow,
+  AdminStats,
+  PresencaResult,
+  Question,
+  RecoveryResult,
+  StudentResult,
+} from '../types'
 
-const api = axios.create({ baseURL: '/api' })
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api'
+
+const api = axios.create({ baseURL: API_BASE_URL })
 
 export const fetchQuestions = () =>
   api.get<Question[]>('/questions').then((r) => r.data)
@@ -55,5 +65,6 @@ export const deletePresencaResult = (id: number) =>
 export const fetchAdminResults = () =>
   api.get<AdminResultRow[]>('/admin-results').then((r) => r.data)
 
-export const deleteAdminResults = (rows: Array<Pick<AdminResultRow, 'id' | 'module'>>) =>
-  api.delete('/admin-results', { data: { rows } }).then((r) => r.data)
+export const deleteAdminResults = (
+  rows: Array<Pick<AdminResultRow, 'id' | 'module'>>
+) => api.delete('/admin-results', { data: { rows } }).then((r) => r.data)
