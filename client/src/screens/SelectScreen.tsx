@@ -2,7 +2,7 @@ import { useApp } from "../hooks/useAppStore";
 import { Layout, Screen } from "../types";
 import { getWindowStatus, WINDOW_OPEN } from "../data/recoveryQuestions";
 
-const STUDY_ONLY_MODE = true;
+const STUDY_ONLY_MODE = false;
 
 const ICONS = ["🌐", "⚡", "🔧"];
 const ICON_BG = ["bg-[#E0EDF8]", "bg-green-bg", "bg-gold-bg"];
