@@ -251,12 +251,14 @@ app.post("/api/recovery-results", (req, res) => {
 
   const score = Number(req.body.score) || 0;
   const projectScore = Number(req.body.projectScore) || 0;
-  const bestScore = Math.max(projectScore, score);
+  const bestScore = Math.max(score, projectScore);
+  const course = req.body.course ? String(req.body.course) : undefined;
   const r: RecoveryResult = {
     id: Date.now(),
     name: req.body.name,
     email,
     score,
+    course,
     projectScore,
     bestScore,
     passed: bestScore >= 6,
@@ -291,10 +293,12 @@ app.post("/api/presenca-results", (req, res) => {
     Number(req.body.presencaPct) || 0,
     challengePct,
   );
+  const course = req.body.course ? String(req.body.course) : undefined;
   const r: PresencaResult = {
     id: Date.now(),
     name: req.body.name,
     email,
+    course,
     previousPct,
     challengePct,
     presencaPct,
@@ -372,6 +376,23 @@ app.get("/api/stats", (_req, res) => {
         : 0,
     },
   });
+});
+app.post("/api/admin-auth", (req, res) => {
+  const { email, adminCode } = req.body ?? {};
+
+  const normalizedEmail = String(email ?? "")
+    .toLowerCase()
+    .trim();
+  const normalizedCode = String(adminCode ?? "").trim();
+
+  const isValid =
+    normalizedEmail ===
+      String(process.env.ADMIN_EMAIL ?? "")
+        .toLowerCase()
+        .trim() &&
+    normalizedCode === String(process.env.ADMIN_ACCESS_CODE ?? "").trim();
+
+  res.json({ ok: isValid });
 });
 
 app.listen(PORT, () =>

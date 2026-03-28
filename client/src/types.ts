@@ -53,6 +53,7 @@ export interface RecoveryResult {
   id: number;
   name: string;
   email: string;
+  course?: string;
   score: number;
   passed: boolean;
   ts: number;
@@ -119,6 +120,7 @@ export interface AdminResultRow {
   id: number;
   name: string;
   email: string;
+  course?: string
   score: number;
   max: number;
   passed: boolean;

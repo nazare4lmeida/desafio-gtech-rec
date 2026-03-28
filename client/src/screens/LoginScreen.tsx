@@ -1,28 +1,78 @@
 import { useState } from "react";
 import { useApp } from "../hooks/useAppStore";
+import { validateAdminAccess } from "../utils/api";
 
 export default function LoginScreen() {
   const { login } = useApp();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    adminCode?: string;
+  }>({});
   const [course, setCourse] = useState<
     "fullstack" | "ia-generativa" | "ia-soft-skills"
   >("fullstack");
+  const [adminCode, setAdminCode] = useState("");
+  const isAdminEmail = email.trim().toLowerCase() === "nazyalmeida@gmail.com";
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!name.trim() || name.trim().split(" ").filter(Boolean).length < 2)
+
+    if (!name.trim() || name.trim().split(" ").filter(Boolean).length < 2) {
       e.name = "Informe nome e sobrenome.";
-    if (!email.trim() || !email.includes("@"))
+    }
+
+    if (!email.trim() || !email.includes("@")) {
       e.email = "Informe um e-mail válido.";
+    }
+
+    if (isAdminEmail && !adminCode.trim()) {
+      e.adminCode = "Informe o código de acesso do admin.";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
-    login({ name: name.trim(), email: email.trim(), course });
+
+    const user = {
+      name: name.trim(),
+      email: email.trim(),
+      course,
+    };
+
+    if (isAdminEmail) {
+      try {
+        const result = await validateAdminAccess({
+          email: user.email,
+          adminCode: adminCode.trim(),
+        });
+
+        if (!result.ok) {
+          setErrors((prev) => ({
+            ...prev,
+            adminCode: "Código de acesso do admin inválido.",
+          }));
+          return;
+        }
+
+        login(user, true);
+        return;
+      } catch (error) {
+        console.error("Erro ao validar acesso de admin:", error);
+        setErrors((prev) => ({
+          ...prev,
+          adminCode: "Não foi possível validar o acesso de admin agora.",
+        }));
+        return;
+      }
+    }
+
+    login(user, false);
   };
 
   return (
@@ -83,6 +133,27 @@ export default function LoginScreen() {
             <p className="text-red text-[.76rem] mt-1">{errors.email}</p>
           )}
         </div>
+
+        {isAdminEmail && (
+          <div className="mb-6">
+            <label className="block text-[.8rem] font-semibold text-slate mb-1.5 tracking-[.3px]">
+              Código de acesso do admin
+            </label>
+            <input
+              type="password"
+              value={adminCode}
+              onChange={(e) => setAdminCode(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void handleSubmit()}
+              placeholder="Informe o código do admin"
+              className={`w-full px-3.5 py-3 border-[1.5px] rounded-xl text-[.9rem] font-sans bg-[#FAFCFF] text-text outline-none transition-all
+        focus:border-blue focus:shadow-[0_0_0_3px_rgba(46,109,164,.14)]
+        ${errors.adminCode ? "border-red" : "border-border"}`}
+            />
+            {errors.adminCode && (
+              <p className="text-red text-[.76rem] mt-1">{errors.adminCode}</p>
+            )}
+          </div>
+        )}
         <div className="mt-4">
           <label className="block text-sm font-semibold text-navy mb-2">
             Selecione seu curso

@@ -9,7 +9,6 @@ import {
 import { useAntiCheat } from "../../utils/moduleSecurity";
 import { postPresencaResult } from "../../utils/api";
 
-
 function Countdown({ targetMs }: { targetMs: number }) {
   const [diff, setDiff] = useState(targetMs - Date.now());
   useEffect(() => {
@@ -239,7 +238,6 @@ export default function DesafioPresenca() {
   const [started, setStarted] = useState(saved?.started ?? false);
   const [userAnswer, setUserAnswer] = useState(saved?.userAnswer ?? "");
   const [userAnswer2, setUserAnswer2] = useState(saved?.userAnswer2 ?? "");
-  const [step, setStep] = useState(1); // Controla se mostra o desafio 1 ou 2
   const [submitted, setSubmitted] = useState(saved?.submitted ?? false);
   const [results, setResults] = useState<{ pass: boolean; label: string }[]>(
     saved?.results ?? [],
@@ -266,6 +264,7 @@ export default function DesafioPresenca() {
       JSON.stringify({
         started,
         userAnswer,
+        userAnswer2,
         submitted,
         results,
         newPct,
@@ -273,8 +272,18 @@ export default function DesafioPresenca() {
         challengePct,
       }),
     );
-  }, [started, userAnswer, submitted, results, newPct, prevPct, challengePct, progressKey, state.user])
-  
+  }, [
+    started,
+    userAnswer,
+    submitted,
+    results,
+    newPct,
+    prevPct,
+    challengePct,
+    progressKey,
+    state.user,
+  ]);
+
   const meetsPresenca = profile.presencaPct >= 30;
   const meetsCourse = profile.coursePct >= 50;
   const eligible = meetsPresenca && meetsCourse;
@@ -339,6 +348,7 @@ export default function DesafioPresenca() {
       await postPresencaResult({
         name: state.user!.name,
         email: state.user!.email,
+        course: state.user!.course,
         presencaPct: updatedPct,
         previousPct: profile.presencaPct,
         challengePct: computedChallengePct,
@@ -614,43 +624,79 @@ export default function DesafioPresenca() {
           </div>
         </div>
 
-        <div className="bg-[#1E3A5F] rounded-xl overflow-hidden mb-4 font-mono text-[.82rem]">
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#162d4a] border-b border-white/10">
-            <div className="w-3 h-3 rounded-full bg-red/60" />
-            <div className="w-3 h-3 rounded-full bg-gold/60" />
-            <div className="w-3 h-3 rounded-full bg-green/60" />
-            <span className="ml-2 text-sky/60 text-xs">filtrarPares.js</span>
-          </div>
-          <div className="p-4 space-y-1">
-            {/* AQUI: Ele decide qual desafio mostrar baseado no step */}
-            {(step === 1 ? CHALLENGE_LINES : CHALLENGE_2_LINES).map((line) => (
-              <div key={line.id} className="flex items-center gap-3">
-                <span className="w-5 text-right text-sky/30 select-none shrink-0 text-xs">
-                  {line.id}
-                </span>
-                {line.editable ? (
-                  <input
-                    type="text"
-                    // AQUI: Ele decide qual estado de resposta usar (userAnswer ou userAnswer2)
-                    value={step === 1 ? userAnswer : userAnswer2}
-                    onChange={(e) =>
-                      step === 1
-                        ? setUserAnswer(e.target.value)
-                        : setUserAnswer2(e.target.value)
-                    }
-                    placeholder={line.placeholder}
-                    className="flex-1 bg-[#2d4f70] border border-blue/40 rounded px-2 py-1 text-white placeholder-sky/40 text-[.82rem] font-mono outline-none focus:border-sky"
-                    style={{ userSelect: "text" }}
-                  />
-                ) : (
-                  <span
-                    className={`${line.content.startsWith("//") ? "text-sky/50" : "text-sky"}`}
-                  >
-                    {line.content || "\u00A0"}
+        <div className="space-y-4 mb-4">
+          <div className="bg-[#1E3A5F] rounded-xl overflow-hidden font-mono text-[.82rem]">
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#162d4a] border-b border-white/10">
+              <div className="w-3 h-3 rounded-full bg-red/60" />
+              <div className="w-3 h-3 rounded-full bg-gold/60" />
+              <div className="w-3 h-3 rounded-full bg-green/60" />
+              <span className="ml-2 text-sky/60 text-xs">filtrarPares.js</span>
+            </div>
+            <div className="p-4 space-y-1">
+              {CHALLENGE_LINES.map((line) => (
+                <div
+                  key={`challenge-1-${line.id}`}
+                  className="flex items-center gap-3"
+                >
+                  <span className="w-5 text-right text-sky/30 select-none shrink-0 text-xs">
+                    {line.id}
                   </span>
-                )}
-              </div>
-            ))}
+                  {line.editable ? (
+                    <input
+                      type="text"
+                      value={userAnswer}
+                      onChange={(e) => setUserAnswer(e.target.value)}
+                      placeholder={line.placeholder}
+                      className="flex-1 bg-[#2d4f70] border border-blue/40 rounded px-2 py-1 text-white placeholder-sky/40 text-[.82rem] font-mono outline-none focus:border-sky"
+                      style={{ userSelect: "text" }}
+                    />
+                  ) : (
+                    <span
+                      className={`${line.content.startsWith("//") ? "text-sky/50" : "text-sky"}`}
+                    >
+                      {line.content || "\u00A0"}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-[#1E3A5F] rounded-xl overflow-hidden font-mono text-[.82rem]">
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#162d4a] border-b border-white/10">
+              <div className="w-3 h-3 rounded-full bg-red/60" />
+              <div className="w-3 h-3 rounded-full bg-gold/60" />
+              <div className="w-3 h-3 rounded-full bg-green/60" />
+              <span className="ml-2 text-sky/60 text-xs">saudar.js</span>
+            </div>
+            <div className="p-4 space-y-1">
+              {CHALLENGE_2_LINES.map((line) => (
+                <div
+                  key={`challenge-2-${line.id}`}
+                  className="flex items-center gap-3"
+                >
+                  <span className="w-5 text-right text-sky/30 select-none shrink-0 text-xs">
+                    {line.id}
+                  </span>
+                  {line.editable ? (
+                    <input
+                      type="text"
+                      value={userAnswer2}
+                      onChange={(e) => setUserAnswer2(e.target.value)}
+                      placeholder={line.placeholder}
+                      className="flex-1 bg-[#2d4f70] border border-blue/40 rounded px-2 py-1 text-white placeholder-sky/40 text-[.82rem] font-mono outline-none focus:border-sky"
+                      style={{ userSelect: "text" }}
+                    />
+                  ) : (
+                    <span
+                      className={`${line.content.startsWith("//") ? "text-sky/50" : "text-sky"}`}
+                    >
+                      {line.content || "\u00A0"}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -659,7 +705,7 @@ export default function DesafioPresenca() {
             Casos de Teste
           </p>
           <div className="flex flex-col gap-1">
-            {TEST_CASES.map((testCase) => (
+            {[...TEST_CASES, ...TEST_CASES_2].map((testCase) => (
               <div
                 key={testCase.label}
                 className="text-xs font-mono text-slate bg-white rounded-lg px-3 py-1.5 border border-border"
@@ -679,7 +725,7 @@ export default function DesafioPresenca() {
           </button>
           <button
             onClick={() => void handleSubmit()}
-            disabled={!userAnswer.trim()}
+            disabled={!userAnswer.trim() || !userAnswer2.trim()}
             className="px-6 py-2.5 bg-blue text-white font-semibold rounded-xl text-sm hover:bg-navy active:scale-[.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Submeter ✓

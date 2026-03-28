@@ -244,13 +244,14 @@ export default function ProvaRecuperacao() {
     saveStudentProfile(state.user!.email, { projectScore: effectiveBest });
 
     try {
-      await postRecoveryResult({
-        name: state.user!.name,
-        email: state.user!.email,
-        score: finalScore,
-        passed: finalScore >= RECOVERY_PASSING_SCORE,
-        projectScore: effectiveBest,
-      });
+await postRecoveryResult({
+  name: state.user!.name,
+  email: state.user!.email,
+  course: state.user!.course,
+  score: finalScore,
+  passed: finalScore >= RECOVERY_PASSING_SCORE,
+  projectScore: effectiveBest,
+});
 
       window.dispatchEvent(new Event("ddg:update"));
     } catch (error) {

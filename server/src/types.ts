@@ -31,6 +31,7 @@ export interface RecoveryResult {
   name: string
   email: string
   score: number
+  course?: string
   passed: boolean
   ts: number
   projectScore?: number
@@ -41,6 +42,7 @@ export interface PresencaResult {
   id: number
   name: string
   email: string
+  course?: string
   presencaPct: number
   ts: number
   previousPct?: number
@@ -59,6 +61,7 @@ export interface AdminResultRow {
   name: string
   email: string
   score: number
+  course?: string
   max: number
   passed: boolean
   ts: number

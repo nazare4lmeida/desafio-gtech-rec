@@ -106,6 +106,7 @@ export default function AdminResults({
     () =>
       filteredRows.map((row) => ({
         modulo: row.moduleLabel,
+        curso: row.course ?? "-",
         nome: row.name,
         email: row.email,
         nota: row.score,
@@ -142,43 +143,43 @@ export default function AdminResults({
     });
   };
 
-const handleDeleteSelected = async () => {
-  if (!selectedRows.length) {
-    onToast("⚠️ Selecione pelo menos um resultado.");
-    return;
-  }
-
-  await deleteAdminResults(
-    selectedRows.map((row) => ({ id: row.id, module: row.module })),
-  );
-
-  selectedRows.forEach((row) => {
-    if (row.module === "recuperacao") {
-      Object.keys(localStorage)
-        .filter(
-          (key) =>
-            key.startsWith(`recovery_submitted_${row.email}_`) ||
-            key.startsWith(`recovery_progress_${row.email}_`),
-        )
-        .forEach((key) => localStorage.removeItem(key));
+  const handleDeleteSelected = async () => {
+    if (!selectedRows.length) {
+      onToast("⚠️ Selecione pelo menos um resultado.");
+      return;
     }
 
-    if (row.module === "presenca") {
-      Object.keys(localStorage)
-        .filter(
-          (key) =>
-            key.startsWith(`presenca_submitted_${row.email}_`) ||
-            key.startsWith(`presenca_progress_${row.email}_`),
-        )
-        .forEach((key) => localStorage.removeItem(key));
-    }
-  });
+    await deleteAdminResults(
+      selectedRows.map((row) => ({ id: row.id, module: row.module })),
+    );
 
-  setSelected({});
-  onToast(`🗑 ${selectedRows.length} resultado(s) removido(s).`);
-  await loadRows();
-  window.dispatchEvent(new Event("ddg:update"));
-};
+    selectedRows.forEach((row) => {
+      if (row.module === "recuperacao") {
+        Object.keys(localStorage)
+          .filter(
+            (key) =>
+              key.startsWith(`recovery_submitted_${row.email}_`) ||
+              key.startsWith(`recovery_progress_${row.email}_`),
+          )
+          .forEach((key) => localStorage.removeItem(key));
+      }
+
+      if (row.module === "presenca") {
+        Object.keys(localStorage)
+          .filter(
+            (key) =>
+              key.startsWith(`presenca_submitted_${row.email}_`) ||
+              key.startsWith(`presenca_progress_${row.email}_`),
+          )
+          .forEach((key) => localStorage.removeItem(key));
+      }
+    });
+
+    setSelected({});
+    onToast(`🗑 ${selectedRows.length} resultado(s) removido(s).`);
+    await loadRows();
+    window.dispatchEvent(new Event("ddg:update"));
+  };
 
   return (
     <div className="animate-fade-up">
@@ -353,4 +354,3 @@ const handleDeleteSelected = async () => {
     </div>
   );
 }
-

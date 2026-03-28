@@ -21,15 +21,6 @@
       "challengePct": 100,
       "presencaPct": 100,
       "ts": 1774621231777
-    },
-    {
-      "id": 1774660858233,
-      "name": "Nazare Almeida",
-      "email": "nazyalmeida@gmail.com",
-      "previousPct": 70,
-      "challengePct": 0,
-      "presencaPct": 70,
-      "ts": 1774660858233
     }
   ],
   "questions": [

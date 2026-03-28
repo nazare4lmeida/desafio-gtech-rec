@@ -40,6 +40,7 @@ export const fetchRecoveryResults = () =>
 export const postRecoveryResult = (data: {
   name: string
   email: string
+  course?: string
   score: number
   passed: boolean
   projectScore?: number
@@ -54,6 +55,7 @@ export const fetchPresencaResults = () =>
 export const postPresencaResult = (data: {
   name: string
   email: string
+  course?: string
   presencaPct: number
   previousPct?: number
   challengePct?: number
@@ -68,3 +70,8 @@ export const fetchAdminResults = () =>
 export const deleteAdminResults = (
   rows: Array<Pick<AdminResultRow, 'id' | 'module'>>
 ) => api.delete('/admin-results', { data: { rows } }).then((r) => r.data)
+
+export const validateAdminAccess = (data: {
+  email: string
+  adminCode: string
+}) => api.post<{ ok: boolean }>('/admin-auth', data).then((r) => r.data)
