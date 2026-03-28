@@ -307,7 +307,7 @@ export default function DesafioPresenca() {
     const passedTests = allTestResults.filter((result) => result.pass).length;
 
     const computedChallengePct = Math.round((passedTests / totalTests) * 100);
-    const updatedPct = Math.max(profile.presencaPct, computedChallengePct);
+    const updatedPct = computedChallengePct;
 
     setResults(allTestResults);
     setPrevPct(profile.presencaPct);
@@ -463,7 +463,8 @@ export default function DesafioPresenca() {
           <div className="text-center mb-6">
             <div className="w-24 h-24 rounded-full border-4 border-blue bg-[#E0EDF8] flex flex-col items-center justify-center mx-auto mb-4">
               <span className="font-mono text-2xl font-bold text-blue">
-                {results.filter((r) => r.pass).length}/{TEST_CASES.length + TEST_CASES_2.length}
+                {results.filter((r) => r.pass).length}/
+                {TEST_CASES.length + TEST_CASES_2.length}
               </span>
               <span className="text-[.6rem] text-blue font-bold uppercase">
                 testes
@@ -473,7 +474,7 @@ export default function DesafioPresenca() {
               Resultado do Desafio Presença
             </h2>
             <p className="text-muted text-sm mt-1">
-              Seu desempenho foi aplicado considerando sempre a maior presença.
+              Seu resultado final foi calculado com base nos acertos do desafio. No entanto, leve em consideração a maior nota que tiver.
             </p>
           </div>
 
