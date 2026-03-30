@@ -391,6 +391,9 @@ export default function DesafioPresenca() {
 
   if (alreadyDone && !submitted) {
     const stored = JSON.parse(localStorage.getItem(submissionKey) || "{}");
+    const totalTests = stored.max ?? TEST_CASES.length + TEST_CASES_2.length;
+    const passedTests = stored.score ?? 0;
+    const finalPct = stored.challengePct ?? stored.newPct ?? 0;
 
     return (
       <div className="flex flex-col items-center gap-6">
@@ -412,16 +415,17 @@ export default function DesafioPresenca() {
             <div className="text-center mb-6">
               <div className="w-24 h-24 rounded-full border-4 border-blue bg-[#E0EDF8] flex flex-col items-center justify-center mx-auto mb-4">
                 <span className="font-mono text-2xl font-bold text-blue">
-                  {results.filter((r) => r.pass).length}/
-                  {TEST_CASES.length + TEST_CASES_2.length}
+                  {passedTests}/{totalTests}
                 </span>
                 <span className="text-[.6rem] text-blue font-bold uppercase">
                   testes
                 </span>
               </div>
+
               <h2 className="font-display text-xl font-extrabold text-navy">
                 Resultado do Desafio Presença
               </h2>
+
               <p className="text-muted text-sm mt-1">
                 Seu resultado final foi calculado com base nos acertos do
                 desafio. No entanto, leve em consideração a maior nota que
@@ -432,19 +436,19 @@ export default function DesafioPresenca() {
             <div className="flex gap-3 mb-5">
               <PresCard
                 label="Testes corretos"
-                value={`${results.filter((r) => r.pass).length}/${TEST_CASES.length + TEST_CASES_2.length}`}
+                value={`${passedTests}/${totalTests}`}
                 color="text-navy"
               />
               <PresCard
                 label="Pontuação final"
-                value={`${challengePct}%`}
+                value={`${finalPct}%`}
                 color="text-green"
                 highlight
               />
             </div>
 
             <div className="rounded-xl p-4 text-sm mb-5 bg-[#EFF4FA] text-muted">
-              Sua pontuação final neste desafio foi de {challengePct}%.
+              Sua pontuação final neste desafio foi de {finalPct}%.
             </div>
           </div>
         </div>
