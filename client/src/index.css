@@ -79,3 +79,81 @@ input:checked + .toggle-slider::before {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--sky); }
+
+
+/* =========================
+   Responsividade
+   ========================= */
+
+@media (max-width: 1024px) {
+  html, body {
+    font-size: 15px;
+  }
+
+  .code-textarea {
+    padding: 12px;
+    font-size: 0.78rem;
+    line-height: 1.65;
+    min-height: 130px;
+  }
+}
+
+@media (max-width: 768px) {
+  html, body {
+    font-size: 14px;
+  }
+
+  .code-textarea {
+    padding: 10px;
+    font-size: 0.75rem;
+    line-height: 1.55;
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .toggle-slider::before {
+    width: 15px;
+    height: 15px;
+    left: 3px;
+    top: 3px;
+  }
+
+  input:checked + .toggle-slider::before {
+    transform: translateX(16px);
+  }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  html, body {
+    font-size: 13px;
+  }
+
+  .code-textarea {
+    padding: 8px;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    min-height: 100px;
+    tab-size: 2;
+  }
+
+  .toggle-slider::before {
+    width: 14px;
+    height: 14px;
+    left: 2px;
+    top: 2px;
+  }
+
+  input:checked + .toggle-slider::before {
+    transform: translateX(15px);
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}

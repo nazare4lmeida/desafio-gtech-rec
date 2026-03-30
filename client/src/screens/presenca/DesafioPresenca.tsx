@@ -393,15 +393,62 @@ export default function DesafioPresenca() {
     const stored = JSON.parse(localStorage.getItem(submissionKey) || "{}");
 
     return (
-      <WindowMessage
-        icon="✅"
-        title="Desafio já realizado"
-        desc={`Sua presença considerada pelo Desafio ficou em ${
-          stored.newPct ?? "?"
-        }%. Mas o que vale é a porcentagem mais alta entre a sua presença atual e a do desafio.`}
-        color="text-green"
-        onBack={() => navigate("select")}
-      />
+      <div className="flex flex-col items-center gap-6">
+        <WindowMessage
+          icon="✅"
+          title="Desafio já realizado"
+          desc={`Sua presença considerada pelo Desafio ficou em ${
+            stored.newPct ?? "?"
+          }%. Mas o que vale é a porcentagem mais alta entre a sua presença atual e a do desafio.`}
+          color="text-green"
+          onBack={() => navigate("select")}
+        />
+
+        <div
+          className="w-full max-w-[520px] mx-auto animate-scale-in text-center"
+          style={{ userSelect: "none" }}
+        >
+          <div className="bg-surface rounded-card border border-border shadow-card-lg p-8">
+            <div className="text-center mb-6">
+              <div className="w-24 h-24 rounded-full border-4 border-blue bg-[#E0EDF8] flex flex-col items-center justify-center mx-auto mb-4">
+                <span className="font-mono text-2xl font-bold text-blue">
+                  {results.filter((r) => r.pass).length}/
+                  {TEST_CASES.length + TEST_CASES_2.length}
+                </span>
+                <span className="text-[.6rem] text-blue font-bold uppercase">
+                  testes
+                </span>
+              </div>
+              <h2 className="font-display text-xl font-extrabold text-navy">
+                Resultado do Desafio Presença
+              </h2>
+              <p className="text-muted text-sm mt-1">
+                Seu resultado final foi calculado com base nos acertos do
+                desafio. No entanto, leve em consideração a maior nota que
+                tiver.
+              </p>
+            </div>
+
+            <div className="flex gap-3 mb-5">
+              <PresCard
+                label="Testes corretos"
+                value={`${results.filter((r) => r.pass).length}/${TEST_CASES.length + TEST_CASES_2.length}`}
+                color="text-navy"
+              />
+              <PresCard
+                label="Pontuação final"
+                value={`${challengePct}%`}
+                color="text-green"
+                highlight
+              />
+            </div>
+
+            <div className="rounded-xl p-4 text-sm mb-5 bg-[#EFF4FA] text-muted">
+              Sua pontuação final neste desafio foi de {challengePct}%.
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -495,9 +542,8 @@ export default function DesafioPresenca() {
           </h2>
           <p className="text-muted text-sm mt-2 mb-5 leading-relaxed">
             Complete a função JavaScript que filtra números pares.
-            <br />
-            O percentual de acertos vira sua nova presença, mas sempre prevalece
-            a maior.
+            <br />O percentual de acertos vira sua nova presença, mas sempre
+            prevalece a maior.
           </p>
           <div className="grid grid-cols-2 gap-3 text-left mb-5">
             {[

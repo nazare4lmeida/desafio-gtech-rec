@@ -312,17 +312,24 @@ export default function ProvaRecuperacao() {
   if (alreadySubmitted && !finished) {
     const stored = JSON.parse(localStorage.getItem(submissionKey) || "{}");
 
-    return (
-      <WindowMessage
-        icon="✅"
-        title="Prova já realizada"
-        desc={`Você já enviou sua prova nesta janela com nota final de ${stored.score ?? "?"}/10.`}
-        color="text-green"
-        onBack={() => navigate("select")}
-      />
-    );
-  }
+return (
+  <div className="flex flex-col items-center gap-6">
+    <WindowMessage
+      icon="✅"
+      title="Prova já realizada"
+      desc={`Você já enviou sua prova nesta janela com nota final de ${stored.score ?? "?"}/10.`}
+      color="text-green"
+      onBack={() => navigate("select")}
+    />
 
+    <Certificate
+      name={stored.name}
+      score={stored.score ?? 0}
+    />
+  </div>
+);
+  }
+  
   if (finished) {
     return (
       <div
