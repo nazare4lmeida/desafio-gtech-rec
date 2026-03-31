@@ -218,7 +218,7 @@ export default function DesafioPresenca() {
   const windowStatus = getWindowStatus(state.user?.email);
   const isAdminUser =
     state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
-  const ATTEMPT_VERSION = "reset-v5";
+  const ATTEMPT_VERSION = "reset-v6";
 
   const submissionKey = `presenca_submitted_${state.user?.email}_${ATTEMPT_VERSION}`;
   const progressKey = `presenca_progress_${state.user?.email}_${ATTEMPT_VERSION}`;

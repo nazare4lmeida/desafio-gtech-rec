@@ -135,7 +135,7 @@ export default function ProvaRecuperacao() {
   const windowStatus = getWindowStatus(state.user?.email);
   const isAdminUser =
     state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
-  const ATTEMPT_VERSION = "reset-v5";
+  const ATTEMPT_VERSION = "reset-v6";
 
   const submissionKey = `recovery_submitted_${state.user?.email}_${ATTEMPT_VERSION}`;
   const progressKey = `recovery_progress_${state.user?.email}_${ATTEMPT_VERSION}`;
