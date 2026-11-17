@@ -4,11 +4,10 @@ export type Screen =
   | "challenge"
   | "result"
   | "admin"
-  | "recuperacao"
   | "presenca"
   | "roteiro";
 
-export type CourseTrack = "fullstack" | "ia-generativa" | "ia-soft-skills" | "fullcycle";
+export type CourseTrack = "fullstack" | "ia-generativa" | "fullcycle";
 
 export type Layout = 1 | 2 | 3;
 export type Difficulty = "beginner" | "beginner+" | "intermediate" | "hard";

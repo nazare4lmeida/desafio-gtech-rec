@@ -22,7 +22,7 @@ export default function LoginScreen() {
     adminCode?: string;
   }>({});
   const [course, setCourse] = useState<
-    "fullstack" | "ia-generativa" | "ia-soft-skills" | "fullcycle"
+    "fullstack" | "ia-generativa" | "fullcycle"
   >("fullstack");
   const [adminCode, setAdminCode] = useState("");
   const isAdminEmail = email.trim().toLowerCase() === "nazyalmeida@gmail.com";
@@ -90,12 +90,15 @@ export default function LoginScreen() {
       const aluno = await loginAluno({
         email: user.email,
         dataNascimento: dataNascimento.trim(),
+        curso: user.course,
       });
       login({ ...user, name: user.name || aluno.nome, dataNascimento: dataNascimento.trim() }, false);
     } catch (error: any) {
+      const bruto = error?.response?.data?.error;
       const msg =
-        error?.response?.data?.error ??
-        "Não foi possível validar seu acesso agora.";
+        typeof bruto === "string" && bruto
+          ? bruto
+          : "Não foi possível validar seu acesso agora.";
       setErrors((prev) => ({
         ...prev,
         dataNascimento: msg,
@@ -217,7 +220,6 @@ export default function LoginScreen() {
                 e.target.value as
                   | "fullstack"
                   | "ia-generativa"
-                  | "ia-soft-skills"
                   | "fullcycle",
               )
             }
@@ -225,7 +227,6 @@ export default function LoginScreen() {
           >
             <option value="fullstack">Fullstack</option>
             <option value="ia-generativa">IA Generativa</option>
-            <option value="ia-soft-skills">IA + Soft Skills</option>
             <option value="fullcycle">FullCycle</option>
           </select>
         </div>

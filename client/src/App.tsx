@@ -8,7 +8,6 @@ import SelectScreen    from './screens/SelectScreen'
 import ChallengeScreen from './screens/challenge/index'
 import ResultScreen    from './screens/ResultScreen'
 import AdminScreen     from './screens/admin/index'
-import ProvaRecuperacao from './screens/recuperacao/ProvaRecuperacao'
 import DesafioPresenca  from './screens/presenca/DesafioPresenca'
 import StudyGuideScreen from './screens/study/StudyGuideScreen'
 
@@ -30,7 +29,6 @@ function Inner() {
         {state.screen === 'challenge'   && <ChallengeScreen onToast={toast} />}
         {state.screen === 'result'      && <ResultScreen onToast={toast} />}
         {state.screen === 'admin'       && <AdminScreen onToast={toast} />}
-        {state.screen === 'recuperacao' && <ProvaRecuperacao />}
         {state.screen === 'presenca'    && <DesafioPresenca />}
         {state.screen === "roteiro" && <StudyGuideScreen />}
       </main>

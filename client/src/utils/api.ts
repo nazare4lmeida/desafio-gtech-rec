@@ -81,11 +81,14 @@ export const validateAdminAccess = (data: {
 
 // ---------- Login do aluno e Desafio de Presença ----------
 
-export const loginAluno = (data: { email: string; dataNascimento: string }) =>
-  api.post<{ nome: string; email: string; formacao: string }>('/login', data).then((r) => r.data)
+export const loginAluno = (data: { email: string; dataNascimento: string; curso: string }) =>
+  api.post<{ nome: string; email: string; curso: string }>('/login', data).then((r) => r.data)
 
 export const fetchDesafio = (curso: string) =>
   api.get<DesafioAluno>(`/desafio/${curso}`).then((r) => r.data)
+
+export const fetchGuia = (curso: string) =>
+  api.get<GuiaEstudo>(`/guia/${curso}`).then((r) => r.data)
 
 export const fetchDesafioStatus = (data: { email: string; dataNascimento: string; curso: string }) =>
   api.post<DesafioStatus>('/desafio-status', data).then((r) => r.data)
@@ -94,6 +97,7 @@ export const enviarDesafio = (data: {
   email: string
   dataNascimento: string
   curso: string
+  respostas: number[]
   codigos?: Record<string, string>
   texto?: string
 }) => api.post<DesafioResultado>('/desafio/enviar', data).then((r) => r.data)
@@ -109,9 +113,17 @@ export interface DesafioResultado {
   acertos: number
   total: number
   pct: number
+  prova: { acertos: number; total: number }
+  desafio: { acertos: number; total: number }
   aprovado: boolean
   motivo: string
   restantes: number
+}
+
+export interface ProvaQuestao {
+  id: string
+  pergunta: string
+  opcoes: string[]
 }
 
 export interface DesafioAluno {
@@ -122,6 +134,7 @@ export interface DesafioAluno {
   enunciado: string
   notaMinima: number
   limite: number
+  prova: ProvaQuestao[]
   minimoCaracteres?: number
   criterios?: { id: string; rotulo: string }[]
   questoes?: {
@@ -132,4 +145,9 @@ export interface DesafioAluno {
     inicial: string
     testes: { id: string; args: unknown[] }[]
   }[]
+}
+
+export interface GuiaEstudo {
+  titulo: string
+  secoes: { titulo: string; texto: string }[]
 }

@@ -9,13 +9,15 @@ import {
   fetchDesafioStatus,
 } from "../../utils/api";
 
-// Desafio de Presença: até 2 tentativas por formação. 75% ou mais recupera a presença.
+// Desafio de Presença: prova (5 questões) + desafio prático. Até 2 tentativas.
+// A nota é a soma dos acertos. 75% ou mais recupera a presença.
 export default function DesafioPresenca() {
   const { state, navigate } = useApp();
   const user = state.user;
 
   const [desafio, setDesafio] = useState<DesafioAluno | null>(null);
   const [status, setStatus] = useState<DesafioStatus | null>(null);
+  const [respostas, setRespostas] = useState<number[]>([]);
   const [codigos, setCodigos] = useState<Record<string, string>>({});
   const [texto, setTexto] = useState("");
   const [resultado, setResultado] = useState<DesafioResultado | null>(null);
@@ -33,6 +35,7 @@ export default function DesafioPresenca() {
     fetchDesafio(user.course)
       .then((d) => {
         setDesafio(d);
+        setRespostas(new Array(d.prova.length).fill(-1));
         const iniciais: Record<string, string> = {};
         d.questoes?.forEach((q) => (iniciais[q.id] = q.inicial));
         setCodigos(iniciais);
@@ -56,6 +59,11 @@ export default function DesafioPresenca() {
   }
 
   const bloqueado = status?.aprovado || (status !== null && status.restantes === 0);
+  const provaCompleta = respostas.length > 0 && respostas.every((r) => r >= 0);
+  const desafioPreenchido =
+    desafio?.tipo === "codigo"
+      ? Object.values(codigos).some((c) => c.trim() !== "")
+      : texto.trim().length >= (desafio?.minimoCaracteres ?? 0);
 
   const enviar = async () => {
     if (!desafio) return;
@@ -64,12 +72,14 @@ export default function DesafioPresenca() {
     try {
       const r = await enviarDesafio({
         ...credenciais,
+        respostas,
         ...(desafio.tipo === "codigo" ? { codigos } : { texto }),
       });
       setResultado(r);
       setStatus(await fetchDesafioStatus(credenciais));
     } catch (e: any) {
-      setErro(e?.response?.data?.error ?? "Não foi possível enviar agora.");
+      const bruto = e?.response?.data?.error;
+      setErro(typeof bruto === "string" && bruto ? bruto : "Não foi possível enviar agora.");
     } finally {
       setEnviando(false);
     }
@@ -87,8 +97,8 @@ export default function DesafioPresenca() {
         )}
       </div>
 
-      <div className="bg-surface rounded-b-card px-8 py-6 border border-border border-t-0 space-y-5">
-        {status && (
+      <div className="bg-surface rounded-b-card px-8 py-6 border border-border border-t-0 space-y-6">
+        {status && !resultado && (
           <p className="text-sm text-slate">
             {status.aprovado
               ? `Presença recuperada com ${status.melhorPct}%.`
@@ -98,53 +108,82 @@ export default function DesafioPresenca() {
 
         {desafio && !resultado && !bloqueado && (
           <>
-            <p className="text-sm text-navy">{desafio.enunciado}</p>
-
-            {desafio.tipo === "codigo" &&
-              desafio.questoes?.map((q) => (
+            <section className="space-y-4">
+              <h2 className="font-semibold text-navy">1. Prova</h2>
+              {desafio.prova.map((q, i) => (
                 <div key={q.id} className="space-y-2">
-                  <h2 className="font-semibold text-navy">
-                    {q.titulo}
-                  </h2>
-                  <p className="text-sm text-slate">{q.descricao}</p>
-                  <textarea
-                    value={codigos[q.id] ?? ""}
-                    onChange={(e) => setCodigos({ ...codigos, [q.id]: e.target.value })}
-                    spellCheck={false}
-                    rows={6}
-                    className="w-full font-mono text-sm rounded-xl border border-border bg-[#0F1B2D] text-[#E6F0FA] p-3 outline-none focus:border-blue"
-                  />
+                  <p className="text-sm text-navy">
+                    {i + 1}. {q.pergunta}
+                  </p>
+                  <div className="grid gap-2">
+                    {q.opcoes.map((op, j) => (
+                      <label
+                        key={j}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer text-sm
+                          ${respostas[i] === j ? "border-blue bg-[#E0EDF8]" : "border-border"}`}
+                      >
+                        <input
+                          type="radio"
+                          name={`prova-${q.id}`}
+                          checked={respostas[i] === j}
+                          onChange={() => setRespostas(respostas.map((r, k) => (k === i ? j : r)))}
+                        />
+                        {op}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               ))}
+            </section>
 
-            {desafio.tipo === "prompt" && (
-              <>
-                <ul className="text-sm text-slate list-disc pl-5 space-y-1">
-                  {desafio.criterios?.map((c) => (
-                    <li key={c.id}>{c.rotulo}</li>
-                  ))}
-                </ul>
-                <textarea
-                  value={texto}
-                  onChange={(e) => setTexto(e.target.value)}
-                  rows={8}
-                  placeholder="Escreva seu prompt aqui"
-                  className="w-full text-sm rounded-xl border border-border p-3 outline-none focus:border-blue"
-                />
-                <p className="text-xs text-muted">
-                  {texto.trim().length} / {desafio.minimoCaracteres} caracteres
-                </p>
-              </>
-            )}
+            <section className="space-y-4">
+              <h2 className="font-semibold text-navy">2. Desafio</h2>
+              <p className="text-sm text-navy">{desafio.enunciado}</p>
+
+              {desafio.tipo === "codigo" &&
+                desafio.questoes?.map((q) => (
+                  <div key={q.id} className="space-y-2">
+                    <h3 className="font-semibold text-navy text-sm">{q.titulo}</h3>
+                    <p className="text-sm text-slate">{q.descricao}</p>
+                    <textarea
+                      value={codigos[q.id] ?? ""}
+                      onChange={(e) => setCodigos({ ...codigos, [q.id]: e.target.value })}
+                      spellCheck={false}
+                      rows={6}
+                      className="w-full font-mono text-sm rounded-xl border border-border bg-[#0F1B2D] text-[#E6F0FA] p-3 outline-none focus:border-blue"
+                    />
+                  </div>
+                ))}
+
+              {desafio.tipo === "prompt" && (
+                <>
+                  <ul className="text-sm text-slate list-disc pl-5 space-y-1">
+                    {desafio.criterios?.map((c) => (
+                      <li key={c.id}>{c.rotulo}</li>
+                    ))}
+                  </ul>
+                  <textarea
+                    value={texto}
+                    onChange={(e) => setTexto(e.target.value)}
+                    rows={8}
+                    placeholder="Escreva seu prompt aqui"
+                    className="w-full text-sm rounded-xl border border-border p-3 outline-none focus:border-blue"
+                  />
+                  <p className="text-xs text-muted">
+                    {texto.trim().length} / {desafio.minimoCaracteres} caracteres
+                  </p>
+                </>
+              )}
+            </section>
 
             {erro && <p className="text-sm text-red">{erro}</p>}
 
             <button
               onClick={enviar}
-              disabled={enviando}
-              className="w-full py-3 bg-navy text-white font-semibold rounded-xl hover:bg-blue disabled:opacity-60"
+              disabled={enviando || !provaCompleta || !desafioPreenchido}
+              className="w-full py-3 bg-navy text-white font-semibold rounded-xl hover:bg-blue disabled:opacity-50"
             >
-              {enviando ? "Corrigindo…" : "Enviar desafio"}
+              {enviando ? "Corrigindo…" : "Enviar prova e desafio"}
             </button>
           </>
         )}
@@ -153,7 +192,8 @@ export default function DesafioPresenca() {
           <div className="text-center space-y-2">
             <p className="font-mono text-3xl font-bold text-navy">{resultado.pct}%</p>
             <p className="text-sm text-slate">
-              {resultado.acertos} de {resultado.total} acertos
+              Prova: {resultado.prova.acertos} de {resultado.prova.total} · Desafio: {resultado.desafio.acertos} de{" "}
+              {resultado.desafio.total}
             </p>
             {resultado.motivo && <p className="text-sm text-red">{resultado.motivo}</p>}
             <p className={`font-semibold ${resultado.aprovado ? "text-green" : "text-red"}`}>
