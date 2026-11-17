@@ -2,6 +2,14 @@ import { useState } from "react";
 import { useApp } from "../hooks/useAppStore";
 import { loginAluno, validateAdminAccess } from "../utils/api";
 
+// Deixa só os números e coloca as barras: 01/02/2000
+const formatarData = (valor: string) => {
+  const d = valor.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+};
+
 export default function LoginScreen() {
   const { login } = useApp();
   const [name, setName] = useState("");
@@ -163,7 +171,7 @@ export default function LoginScreen() {
               type="text"
               inputMode="numeric"
               value={dataNascimento}
-              onChange={(e) => setDataNascimento(e.target.value)}
+              onChange={(e) => setDataNascimento(formatarData(e.target.value))}
               onKeyDown={(e) => e.key === "Enter" && void handleSubmit()}
               placeholder="DD/MM/AAAA"
               autoComplete="bday"
