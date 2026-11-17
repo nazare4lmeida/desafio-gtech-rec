@@ -427,14 +427,9 @@ app.put("/api/questions/:id", (req, res) => {
   return res.json(db.questions[idx]);
 });
 
-app.get("/api/results", async (_req, res) => {
-  try {
-    const data = await getFullstackResults();
-    res.json(data);
-  } catch (error: any) {
-    console.error("Erro ao buscar results:", error);
-    return res.status(500).json({ error: error.message });
-  }
+// Resultados antigos do Full Stack não estão mais neste banco. A tela não depende deles.
+app.get("/api/results", (_req, res) => {
+  res.json([]);
 });
 
 app.post("/api/results", async (_req, res) => {
