@@ -31,7 +31,7 @@ export default function LoginScreen() {
     const e: typeof errors = {};
 
     if (!name.trim() || name.trim().split(" ").filter(Boolean).length < 2) {
-      e.name = "Informe nome e sobrenome.";
+      e.name = "Informe seu nome e sobrenome.";
     }
 
     if (!email.trim() || !email.includes("@")) {
