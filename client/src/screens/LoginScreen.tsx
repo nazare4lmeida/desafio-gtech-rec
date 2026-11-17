@@ -25,7 +25,7 @@ export default function LoginScreen() {
     "fullstack" | "ia-generativa" | "ia-soft-skills" | "fullcycle"
   >("fullstack");
   const [adminCode, setAdminCode] = useState("");
-  const isAdminEmail = email.trim().toLowerCase() === "nazyalmeida@gmail.com";
+  const isAdminEmail = email.trim().toLowerCase() === "admin@gt4.com";
 
   const validate = () => {
     const e: typeof errors = {};
@@ -91,7 +91,14 @@ export default function LoginScreen() {
         email: user.email,
         dataNascimento: dataNascimento.trim(),
       });
-      login({ ...user, name: user.name || aluno.nome, dataNascimento: dataNascimento.trim() }, false);
+      login(
+        {
+          ...user,
+          name: user.name || aluno.nome,
+          dataNascimento: dataNascimento.trim(),
+        },
+        false,
+      );
     } catch (error: any) {
       const msg =
         error?.response?.data?.error ??
@@ -180,7 +187,9 @@ export default function LoginScreen() {
               ${errors.dataNascimento ? "border-red" : "border-border"}`}
             />
             {errors.dataNascimento && (
-              <p className="text-red text-[.76rem] mt-1">{errors.dataNascimento}</p>
+              <p className="text-red text-[.76rem] mt-1">
+                {errors.dataNascimento}
+              </p>
             )}
           </div>
         )}

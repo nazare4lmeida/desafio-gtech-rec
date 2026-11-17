@@ -124,7 +124,7 @@ export const RECOVERY_QUESTIONS: RecoveryQuestion[] = [
 export function getWindowStatus(
   userEmail?: string,
 ): "before" | "open" | "after" {
-  const isAdmin = userEmail?.toLowerCase() === "nazyalmeida@gmail.com";
+  const isAdmin = userEmail?.toLowerCase() === "admin@gt4.com";
 
   if (isAdmin) return "open";
 
@@ -135,7 +135,7 @@ export function getWindowStatus(
 }
 
 export function isWindowOpen(userEmail?: string) {
-  const isAdmin = userEmail?.toLowerCase() === "nazyalmeida@gmail.com";
+  const isAdmin = userEmail?.toLowerCase() === "admin@gt4.com";
 
   if (isAdmin) return true;
 

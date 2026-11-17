@@ -55,8 +55,7 @@ export default function SelectScreen() {
   const { state, db, startChallenge, navigate, setAdminTab } = useApp();
   const windowStatus = getWindowStatus();
   const isWindowOpen = windowStatus === "open";
-  const isAdminUser =
-    state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
+  const isAdminUser = state.user?.email?.toLowerCase() === "admin@gt4.com";
 
   const recoveryKey = `recovery_submitted_${state.user?.email}_${WINDOW_OPEN}`;
   const presencaKey = `presenca_submitted_${state.user?.email}_${WINDOW_OPEN}`;

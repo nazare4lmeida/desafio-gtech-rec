@@ -133,8 +133,7 @@ const CAT_COLORS: Record<string, string> = {
 export default function ProvaRecuperacao() {
   const { state, navigate, setAdminTab } = useApp();
   const windowStatus = getWindowStatus(state.user?.email);
-  const isAdminUser =
-    state.user?.email?.toLowerCase() === "nazyalmeida@gmail.com";
+  const isAdminUser = state.user?.email?.toLowerCase() === "admin@gt4.com";
   const ATTEMPT_VERSION = "reset-v6";
 
   const submissionKey = `recovery_submitted_${state.user?.email}_${ATTEMPT_VERSION}`;
@@ -312,24 +311,21 @@ export default function ProvaRecuperacao() {
   if (alreadySubmitted && !finished) {
     const stored = JSON.parse(localStorage.getItem(submissionKey) || "{}");
 
-return (
-  <div className="flex flex-col items-center gap-6">
-    <WindowMessage
-      icon="✅"
-      title="Prova já realizada"
-      desc={`Você já enviou sua prova nesta janela com nota final de ${stored.score ?? "?"}/10.`}
-      color="text-green"
-      onBack={() => navigate("select")}
-    />
+    return (
+      <div className="flex flex-col items-center gap-6">
+        <WindowMessage
+          icon="✅"
+          title="Prova já realizada"
+          desc={`Você já enviou sua prova nesta janela com nota final de ${stored.score ?? "?"}/10.`}
+          color="text-green"
+          onBack={() => navigate("select")}
+        />
 
-    <Certificate
-      name={stored.name}
-      score={stored.score ?? 0}
-    />
-  </div>
-);
+        <Certificate name={stored.name} score={stored.score ?? 0} />
+      </div>
+    );
   }
-  
+
   if (finished) {
     return (
       <div
