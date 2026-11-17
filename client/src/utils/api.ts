@@ -85,10 +85,10 @@ export const loginAluno = (data: { email: string; dataNascimento: string; curso:
   api.post<{ nome: string; email: string; curso: string }>('/login', data).then((r) => r.data)
 
 export const fetchDesafio = (curso: string) =>
-  api.get<DesafioAluno>(`/desafio/${curso}`).then((r) => r.data)
+  api.get<DesafioAluno>('/desafio', { params: { curso } }).then((r) => r.data)
 
 export const fetchGuia = (curso: string) =>
-  api.get<GuiaEstudo>(`/guia/${curso}`).then((r) => r.data)
+  api.get<GuiaEstudo>('/guia', { params: { curso } }).then((r) => r.data)
 
 export const fetchDesafioStatus = (data: { email: string; dataNascimento: string; curso: string }) =>
   api.post<DesafioStatus>('/desafio-status', data).then((r) => r.data)
@@ -100,7 +100,7 @@ export const enviarDesafio = (data: {
   respostas: number[]
   codigos?: Record<string, string>
   texto?: string
-}) => api.post<DesafioResultado>('/desafio/enviar', data).then((r) => r.data)
+}) => api.post<DesafioResultado>('/desafio-enviar', data).then((r) => r.data)
 
 export interface DesafioStatus {
   usadas: number

@@ -869,16 +869,16 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-app.get("/api/desafio/:curso", (req, res) => {
-  const curso = req.params.curso;
+app.get("/api/desafio", (req, res) => {
+  const curso = String(req.query.curso ?? "");
   if (!ehCurso(curso)) {
     return res.status(404).json({ error: "Formação sem desafio." });
   }
   res.json({ curso, notaMinima: NOTA_MINIMA, limite: LIMITE_TENTATIVAS, ...desafioParaAluno(curso) });
 });
 
-app.get("/api/guia/:curso", (req, res) => {
-  const curso = req.params.curso;
+app.get("/api/guia", (req, res) => {
+  const curso = String(req.query.curso ?? "");
   if (!ehCurso(curso)) return res.status(404).json({ error: "Formação sem guia." });
   res.json(GUIAS[curso]);
 });
@@ -911,7 +911,7 @@ app.post("/api/desafio-status", async (req, res) => {
   }
 });
 
-app.post("/api/desafio/enviar", async (req, res) => {
+app.post("/api/desafio-enviar", async (req, res) => {
   const sb = getSupabaseClient();
   if (!sb) return res.status(503).json({ error: "Banco não configurado." });
 
