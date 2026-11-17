@@ -58,7 +58,8 @@ export default function DesafioPresenca() {
     );
   }
 
-  const bloqueado = status?.aprovado || (status !== null && status.restantes === 0);
+  // Mesmo aprovado, o aluno pode usar as duas tentativas. Vale a maior nota.
+  const bloqueado = status !== null && status.restantes === 0;
   const provaCompleta = respostas.length > 0 && respostas.every((r) => r >= 0);
   const desafioPreenchido =
     desafio?.tipo === "codigo"
@@ -99,11 +100,17 @@ export default function DesafioPresenca() {
 
       <div className="bg-surface rounded-b-card px-8 py-6 border border-border border-t-0 space-y-6">
         {status && !resultado && (
-          <p className="text-sm text-slate">
-            {status.aprovado
-              ? `Presença recuperada com ${status.melhorPct}%.`
-              : `Tentativas restantes: ${status.restantes}.`}
-          </p>
+          <div className="rounded-xl bg-[#EFF4FA] px-4 py-3 text-sm text-navy">
+            {status.aprovado && (
+              <p className="font-semibold text-green">
+                Presença recuperada com {status.melhorPct}%.
+              </p>
+            )}
+            <p className="text-slate">
+              Tentativas restantes: <span className="font-semibold text-navy">{status.restantes}</span>. Vale a maior
+              nota entre as tentativas.
+            </p>
+          </div>
         )}
 
         {desafio && !resultado && !bloqueado && (
@@ -190,61 +197,104 @@ export default function DesafioPresenca() {
 
         {resultado && (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <p className="font-mono text-3xl font-bold text-navy">{resultado.pct}%</p>
-              <p className="text-sm text-slate">
-                Prova: {resultado.prova.acertos} de {resultado.prova.total} · Desafio: {resultado.desafio.acertos} de{" "}
-                {resultado.desafio.total}
-              </p>
-              {resultado.motivo && <p className="text-sm text-red">{resultado.motivo}</p>}
-              <p className={`font-semibold ${resultado.aprovado ? "text-green" : "text-red"}`}>
+            <div
+              className={`rounded-[16px] p-6 text-center text-white ${
+                resultado.aprovado ? "bg-gradient-to-br from-green to-[#2e8b57]" : "bg-gradient-to-br from-navy to-blue"
+              }`}
+            >
+              <p className="text-xs uppercase tracking-[2px] text-white/70">Sua nota</p>
+              <p className="font-mono text-5xl font-bold mt-1">{resultado.pct}%</p>
+              <div className="mx-auto mt-3 h-2 w-full max-w-[320px] rounded-full bg-white/25 overflow-hidden">
+                <div className="h-full bg-white" style={{ width: `${resultado.pct}%` }} />
+              </div>
+              <p className="mt-3 text-sm">
                 {resultado.aprovado
                   ? "Aprovado! Sua presença foi recuperada."
                   : resultado.restantes > 0
                     ? `Não atingiu ${desafio?.notaMinima}%. Você ainda tem ${resultado.restantes} tentativa.`
                     : `Não atingiu ${desafio?.notaMinima}%. Suas tentativas acabaram.`}
               </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs">
+                <span className="rounded-full bg-white/20 px-3 py-1">
+                  Prova: {resultado.prova.acertos}/{resultado.prova.total}
+                </span>
+                <span className="rounded-full bg-white/20 px-3 py-1">
+                  Desafio: {resultado.desafio.acertos}/{resultado.desafio.total}
+                </span>
+              </div>
+              {resultado.motivo && <p className="mt-3 text-xs text-white/90">{resultado.motivo}</p>}
             </div>
 
             <section className="space-y-3">
-              <h2 className="font-semibold text-navy">Correção da prova</h2>
+              <h2 className="font-display text-lg font-bold text-navy">Correção da prova</h2>
               {resultado.feedback.prova.map((d, i) => (
-                <div key={i} className={`rounded-xl border p-3 text-sm ${d.acertou ? "border-green-bdr bg-green-bg" : "border-red/40 bg-red/5"}`}>
-                  <p className="font-semibold text-navy">
-                    {i + 1}. {d.pergunta} <span className={d.acertou ? "text-green" : "text-red"}>{d.acertou ? "✓" : "✗"}</span>
-                  </p>
-                  {!d.acertou && (
-                    <p className="text-slate mt-1">
-                      Você marcou: {d.marcada >= 0 ? d.opcoes[d.marcada] : "nenhuma"}. Resposta correta: {d.opcoes[d.correta]}.
-                    </p>
-                  )}
-                  <p className="text-slate mt-1">{d.explicacao}</p>
+                <div
+                  key={i}
+                  className={`rounded-[14px] border-l-4 bg-surface p-4 shadow-card ${
+                    d.acertou ? "border-green" : "border-red"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 w-6 h-6 shrink-0 rounded-full text-white text-xs font-bold flex items-center justify-center ${
+                        d.acertou ? "bg-green" : "bg-red"
+                      }`}
+                    >
+                      {d.acertou ? "✓" : "✗"}
+                    </span>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-navy text-sm">
+                        {i + 1}. {d.pergunta}
+                      </p>
+                      {!d.acertou && (
+                        <p className="text-sm text-slate">
+                          Você marcou <span className="font-semibold text-red">{d.marcada >= 0 ? d.opcoes[d.marcada] : "nenhuma"}</span>.
+                          A resposta certa é <span className="font-semibold text-green">{d.opcoes[d.correta]}</span>.
+                        </p>
+                      )}
+                      <p className="text-sm text-slate leading-relaxed">{d.explicacao}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-semibold text-navy">Correção do desafio</h2>
+              <h2 className="font-display text-lg font-bold text-navy">Correção do desafio</h2>
               {resultado.feedback.desafio.tipo === "codigo" &&
                 resultado.feedback.desafio.questoes.map((q) => (
-                  <div key={q.titulo} className="space-y-1">
+                  <div key={q.titulo} className="rounded-[14px] border border-border bg-surface p-4 space-y-2">
                     <h3 className="text-sm font-semibold text-navy">{q.titulo}</h3>
-                    {q.testes.map((t, j) => (
-                      <p key={t.id} className={`text-sm ${t.passou ? "text-green" : "text-red"}`}>
-                        {t.passou ? "✓" : "✗"} Teste {j + 1}: entrada {t.args.map((a) => JSON.stringify(a)).join(", ")}
-                      </p>
-                    ))}
+                    <div className="grid gap-1.5">
+                      {q.testes.map((t, j) => (
+                        <p
+                          key={t.id}
+                          className={`text-sm rounded-lg px-3 py-1.5 ${
+                            t.passou ? "bg-green-bg text-green" : "bg-red/10 text-red"
+                          }`}
+                        >
+                          {t.passou ? "✓" : "✗"} Teste {j + 1}: entrada {t.args.map((a) => JSON.stringify(a)).join(", ")}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 ))}
 
               {resultado.feedback.desafio.tipo === "prompt" && (
-                <ul className="space-y-1 text-sm">
-                  {resultado.feedback.desafio.criterios.map((c) => (
-                    <li key={c.rotulo} className={c.atendeu ? "text-green" : "text-red"}>
-                      {c.atendeu ? "✓" : "✗"} {c.rotulo}
-                    </li>
-                  ))}
-                </ul>
+                <div className="rounded-[14px] border border-border bg-surface p-4">
+                  <ul className="grid gap-1.5">
+                    {resultado.feedback.desafio.criterios.map((c) => (
+                      <li
+                        key={c.rotulo}
+                        className={`text-sm rounded-lg px-3 py-1.5 ${
+                          c.atendeu ? "bg-green-bg text-green" : "bg-red/10 text-red"
+                        }`}
+                      >
+                        {c.atendeu ? "✓" : "✗"} {c.rotulo}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </section>
           </div>
@@ -253,7 +303,7 @@ export default function DesafioPresenca() {
         {bloqueado && !resultado && (
           <p className="text-sm text-slate text-center">
             {status?.aprovado
-              ? "Você já recuperou sua presença nesta formação."
+              ? `Você já usou as suas tentativas. Sua melhor nota (${status.melhorPct}%) vale para a presença.`
               : "Você já usou as suas tentativas nesta formação. Procure a coordenação."}
           </p>
         )}

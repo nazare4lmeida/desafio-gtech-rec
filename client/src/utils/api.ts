@@ -163,5 +163,6 @@ export interface DesafioAluno {
 
 export interface GuiaEstudo {
   titulo: string
-  secoes: { titulo: string; texto: string }[]
+  intro: string
+  secoes: { titulo: string; conceito: string; analogia: string; exemplo: string }[]
 }
