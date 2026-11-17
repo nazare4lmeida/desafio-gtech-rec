@@ -687,21 +687,40 @@ app.delete("/api/presenca-results/:id", async (req, res) => {
   }
 });
 
+// Resultados do Desafio de Presença (tabela desafio_tentativas), no formato da tela de admin.
+const ROTULO_FORMACAO: Record<string, string> = {
+  fullstack: "Full Stack",
+  "ia-generativa": "IA Generativa",
+  fullcycle: "FullCycle",
+};
+
+async function getDesafioRows(): Promise<AdminResultRow[]> {
+  const sb = getSupabaseClient();
+  if (!sb) return [];
+
+  const { data, error } = await sb
+    .from("desafio_tentativas")
+    .select("id, email, nome, curso, numero, acertos, total, aprovado, ts")
+    .order("ts", { ascending: false });
+  if (error) throw error;
+
+  return (data ?? []).map((r: any) => ({
+    id: Number(r.id),
+    name: String(r.nome ?? ""),
+    email: String(r.email),
+    score: Number(r.acertos),
+    max: Number(r.total),
+    passed: Boolean(r.aprovado),
+    ts: Date.parse(r.ts),
+    course: String(r.curso),
+    module: "presenca" as const,
+    moduleLabel: `Desafio de Presença · ${ROTULO_FORMACAO[r.curso] ?? r.curso} (tentativa ${r.numero})`,
+  }));
+}
+
 app.get("/api/admin-results", async (_req, res) => {
   try {
-    const [results, recoveryResults, presencaResults] = await Promise.all([
-      getFullstackResults(),
-      getRecoveryResults(),
-      getPresencaResults(),
-    ]);
-
-    const rows = buildAdminRowsFromData(
-      results,
-      recoveryResults,
-      presencaResults,
-    );
-
-    res.json(rows);
+    res.json(await getDesafioRows());
   } catch (error: any) {
     console.error("Erro ao buscar admin_results:", error);
     return res.status(500).json({ error: error.message });
@@ -710,19 +729,19 @@ app.get("/api/admin-results", async (_req, res) => {
 
 app.delete("/api/admin-results", async (req, res) => {
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  const sb = getSupabaseClient();
+  if (!sb) return res.status(503).json({ error: "Banco não configurado." });
 
   try {
-    await Promise.all(
-      rows.map((row: { id?: number; module?: AdminResultRow["module"] }) => {
-        if (typeof row?.id === "number" && row?.module) {
-          return deleteRow(row.module, row.id);
-        }
-
-        return Promise.resolve();
-      }),
-    );
-
-    res.json({ ok: true, deleted: rows.length });
+    // Só apaga tentativas do desafio novo. Notas antigas não estão mais neste banco.
+    const ids = rows
+      .filter((row: { id?: number; module?: string }) => typeof row?.id === "number" && row?.module === "presenca")
+      .map((row: { id: number }) => row.id);
+    if (ids.length) {
+      const { error } = await sb.from("desafio_tentativas").delete().in("id", ids);
+      if (error) throw error;
+    }
+    res.json({ ok: true, deleted: ids.length });
   } catch (error: any) {
     console.error("Erro ao remover admin_results:", error);
     return res.status(500).json({ error: error.message });
@@ -731,17 +750,7 @@ app.delete("/api/admin-results", async (req, res) => {
 
 app.get("/api/stats", async (_req, res) => {
   try {
-    const [results, recoveryResults, presencaResults] = await Promise.all([
-      getFullstackResults(),
-      getRecoveryResults(),
-      getPresencaResults(),
-    ]);
-
-    const allResults = buildAdminRowsFromData(
-      results,
-      recoveryResults,
-      presencaResults,
-    );
+    const allResults = await getDesafioRows();
 
     const total = allResults.length;
     const passed = allResults.filter((r) => r.passed).length;
