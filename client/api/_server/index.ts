@@ -987,6 +987,7 @@ app.post("/api/desafio-enviar", async (req, res) => {
       desafio: resultado.desafio,
       aprovado,
       motivo: resultado.motivo,
+      feedback: resultado.feedback,
       restantes: LIMITE_TENTATIVAS - (usadas + 1),
     });
   } catch (error: any) {

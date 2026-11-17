@@ -189,20 +189,64 @@ export default function DesafioPresenca() {
         )}
 
         {resultado && (
-          <div className="text-center space-y-2">
-            <p className="font-mono text-3xl font-bold text-navy">{resultado.pct}%</p>
-            <p className="text-sm text-slate">
-              Prova: {resultado.prova.acertos} de {resultado.prova.total} · Desafio: {resultado.desafio.acertos} de{" "}
-              {resultado.desafio.total}
-            </p>
-            {resultado.motivo && <p className="text-sm text-red">{resultado.motivo}</p>}
-            <p className={`font-semibold ${resultado.aprovado ? "text-green" : "text-red"}`}>
-              {resultado.aprovado
-                ? "Aprovado! Sua presença foi recuperada."
-                : resultado.restantes > 0
-                  ? `Não atingiu ${desafio?.notaMinima}%. Você ainda tem ${resultado.restantes} tentativa.`
-                  : `Não atingiu ${desafio?.notaMinima}%. Suas tentativas acabaram.`}
-            </p>
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <p className="font-mono text-3xl font-bold text-navy">{resultado.pct}%</p>
+              <p className="text-sm text-slate">
+                Prova: {resultado.prova.acertos} de {resultado.prova.total} · Desafio: {resultado.desafio.acertos} de{" "}
+                {resultado.desafio.total}
+              </p>
+              {resultado.motivo && <p className="text-sm text-red">{resultado.motivo}</p>}
+              <p className={`font-semibold ${resultado.aprovado ? "text-green" : "text-red"}`}>
+                {resultado.aprovado
+                  ? "Aprovado! Sua presença foi recuperada."
+                  : resultado.restantes > 0
+                    ? `Não atingiu ${desafio?.notaMinima}%. Você ainda tem ${resultado.restantes} tentativa.`
+                    : `Não atingiu ${desafio?.notaMinima}%. Suas tentativas acabaram.`}
+              </p>
+            </div>
+
+            <section className="space-y-3">
+              <h2 className="font-semibold text-navy">Correção da prova</h2>
+              {resultado.feedback.prova.map((d, i) => (
+                <div key={i} className={`rounded-xl border p-3 text-sm ${d.acertou ? "border-green-bdr bg-green-bg" : "border-red/40 bg-red/5"}`}>
+                  <p className="font-semibold text-navy">
+                    {i + 1}. {d.pergunta} <span className={d.acertou ? "text-green" : "text-red"}>{d.acertou ? "✓" : "✗"}</span>
+                  </p>
+                  {!d.acertou && (
+                    <p className="text-slate mt-1">
+                      Você marcou: {d.marcada >= 0 ? d.opcoes[d.marcada] : "nenhuma"}. Resposta correta: {d.opcoes[d.correta]}.
+                    </p>
+                  )}
+                  <p className="text-slate mt-1">{d.explicacao}</p>
+                </div>
+              ))}
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="font-semibold text-navy">Correção do desafio</h2>
+              {resultado.feedback.desafio.tipo === "codigo" &&
+                resultado.feedback.desafio.questoes.map((q) => (
+                  <div key={q.titulo} className="space-y-1">
+                    <h3 className="text-sm font-semibold text-navy">{q.titulo}</h3>
+                    {q.testes.map((t, j) => (
+                      <p key={t.id} className={`text-sm ${t.passou ? "text-green" : "text-red"}`}>
+                        {t.passou ? "✓" : "✗"} Teste {j + 1}: entrada {t.args.map((a) => JSON.stringify(a)).join(", ")}
+                      </p>
+                    ))}
+                  </div>
+                ))}
+
+              {resultado.feedback.desafio.tipo === "prompt" && (
+                <ul className="space-y-1 text-sm">
+                  {resultado.feedback.desafio.criterios.map((c) => (
+                    <li key={c.rotulo} className={c.atendeu ? "text-green" : "text-red"}>
+                      {c.atendeu ? "✓" : "✗"} {c.rotulo}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </div>
         )}
 

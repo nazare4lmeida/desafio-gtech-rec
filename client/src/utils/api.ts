@@ -109,6 +109,19 @@ export interface DesafioStatus {
   melhorPct: number
 }
 
+export interface DetalheProva {
+  pergunta: string
+  opcoes: string[]
+  marcada: number
+  correta: number
+  acertou: boolean
+  explicacao: string
+}
+
+export type DetalheDesafio =
+  | { tipo: 'codigo'; questoes: { titulo: string; testes: { id: string; args: unknown[]; passou: boolean }[] }[] }
+  | { tipo: 'prompt'; criterios: { rotulo: string; atendeu: boolean }[] }
+
 export interface DesafioResultado {
   acertos: number
   total: number
@@ -118,6 +131,7 @@ export interface DesafioResultado {
   aprovado: boolean
   motivo: string
   restantes: number
+  feedback: { prova: DetalheProva[]; desafio: DetalheDesafio }
 }
 
 export interface ProvaQuestao {
