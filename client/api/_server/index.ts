@@ -759,58 +759,25 @@ app.get("/api/stats", async (_req, res) => {
         )
       : 0;
 
-    const cats: Record<string, { correct: number; total: number }> = {};
-
-    results.forEach((r) => {
-      Object.entries(r.cats || {}).forEach(([category, value]) => {
-        if (!cats[category]) {
-          cats[category] = { correct: 0, total: 0 };
-        }
-
-        cats[category].correct += toNumber((value as any).c);
-        cats[category].total += toNumber((value as any).t);
-      });
-    });
-
+    // Só existe o Desafio de Presença novo. Os módulos antigos ficam zerados.
     res.json({
       total,
       passed,
       failed: total - passed,
       avgPct,
-      categories: cats,
+      categories: {},
       modules: {
-        fullstack: results.length,
-        recovery: recoveryResults.length,
-        presenca: presencaResults.length,
+        fullstack: 0,
+        recovery: 0,
+        presenca: total,
       },
       recovery: {
-        total: recoveryResults.length,
-        passed: recoveryResults.filter((r) => r.passed).length,
+        total: 0,
+        passed: 0,
       },
       presenca: {
-        total: presencaResults.length,
-        avgPct: presencaResults.length
-          ? Math.round(
-              presencaResults.reduce((sum, r) => {
-                if (typeof r.presencaPct === "number") {
-                  return sum + r.presencaPct;
-                }
-
-                if (typeof r.challengePct === "number") {
-                  return sum + r.challengePct;
-                }
-
-                const score = typeof r.score === "number" ? r.score : 0;
-                const max = typeof r.max === "number" && r.max > 0 ? r.max : 0;
-
-                if (max > 0) {
-                  return sum + Math.round((score / max) * 100);
-                }
-
-                return sum;
-              }, 0) / presencaResults.length,
-            )
-          : 0,
+        total,
+        avgPct,
       },
     });
   } catch (error: any) {
