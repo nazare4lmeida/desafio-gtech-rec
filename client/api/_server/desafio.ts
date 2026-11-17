@@ -25,30 +25,30 @@ type Criterio = { id: string; rotulo: string; padrao: RegExp };
 type DesafioCodigo = { titulo: string; nivel: string; tipo: "codigo"; enunciado: string; questoes: Questao[] };
 type DesafioPrompt = { titulo: string; nivel: string; tipo: "prompt"; enunciado: string; criterios: Criterio[] };
 
-type QuestaoProva = { id: string; pergunta: string; opcoes: string[]; correta: number };
+type QuestaoProva = { id: string; pergunta: string; opcoes: string[]; correta: number; explicacao: string };
 
 // ---------- Provas (5 questões objetivas por formação) ----------
 export const PROVAS: Record<Curso, QuestaoProva[]> = {
   fullstack: [
-    { id: "p1", pergunta: "Qual tag HTML cria um link?", opcoes: ["<link>", "<a>", "<href>", "<url>"], correta: 1 },
-    { id: "p2", pergunta: "Em CSS, qual propriedade altera a cor do texto?", opcoes: ["font-color", "text-color", "color", "background"], correta: 2 },
-    { id: "p3", pergunta: "Qual é o resultado de typeof null em JavaScript?", opcoes: ["null", "object", "undefined", "number"], correta: 1 },
-    { id: "p4", pergunta: "No React, como um componente pai passa dados para o filho?", opcoes: ["state", "props", "hooks", "variables"], correta: 1 },
-    { id: "p5", pergunta: "Em SQL, qual comando busca dados de uma tabela?", opcoes: ["GET", "SELECT", "FETCH", "SHOW"], correta: 1 },
+    { id: "p1", pergunta: "Qual tag HTML cria um link?", opcoes: ["<link>", "<a>", "<href>", "<url>"], correta: 1, explicacao: "A tag <a> cria links. O atributo href indica o destino." },
+    { id: "p2", pergunta: "Em CSS, qual propriedade altera a cor do texto?", opcoes: ["font-color", "text-color", "color", "background"], correta: 2, explicacao: "A propriedade color define a cor do texto. background define a cor de fundo." },
+    { id: "p3", pergunta: "Qual é o resultado de typeof null em JavaScript?", opcoes: ["null", "object", "undefined", "number"], correta: 1, explicacao: "typeof null devolve \"object\", um erro histórico da linguagem. Para testar null, use === null." },
+    { id: "p4", pergunta: "No React, como um componente pai passa dados para o filho?", opcoes: ["state", "props", "hooks", "variables"], correta: 1, explicacao: "Props são os dados que o pai passa ao filho. State é o estado interno de um componente." },
+    { id: "p5", pergunta: "Em SQL, qual comando busca dados de uma tabela?", opcoes: ["GET", "SELECT", "FETCH", "SHOW"], correta: 1, explicacao: "SELECT busca dados de uma tabela. WHERE filtra as linhas." },
   ],
   "ia-generativa": [
-    { id: "p1", pergunta: "O que é um prompt?", opcoes: ["Uma resposta pronta do modelo", "A instrução enviada ao modelo", "O treinamento do modelo", "Um tipo de banco de dados"], correta: 1 },
-    { id: "p2", pergunta: "Por que dar contexto ao prompt ajuda?", opcoes: ["Deixa o modelo mais lento", "Reduz a precisão", "Ajuda o modelo a entender a situação", "Não faz diferença"], correta: 2 },
-    { id: "p3", pergunta: "O que é uma alucinação em IA generativa?", opcoes: ["Falha de conexão", "Resposta incorreta apresentada como verdade", "Erro de tradução", "Modelo que não responde"], correta: 1 },
-    { id: "p4", pergunta: "Qual técnica pede ao modelo que mostre o raciocínio passo a passo?", opcoes: ["Zero-shot", "Chain-of-thought", "Fine-tuning", "Embeddings"], correta: 1 },
-    { id: "p5", pergunta: "Por que é importante revisar a resposta de uma IA?", opcoes: ["Ela nunca erra", "Ela pode errar ou inventar informações", "É proibido usar", "Só vale para textos longos"], correta: 1 },
+    { id: "p1", pergunta: "O que é um prompt?", opcoes: ["Uma resposta pronta do modelo", "A instrução enviada ao modelo", "O treinamento do modelo", "Um tipo de banco de dados"], correta: 1, explicacao: "Prompt é a instrução enviada ao modelo. Quanto mais clara, melhor a resposta." },
+    { id: "p2", pergunta: "Por que dar contexto ao prompt ajuda?", opcoes: ["Deixa o modelo mais lento", "Reduz a precisão", "Ajuda o modelo a entender a situação", "Não faz diferença"], correta: 2, explicacao: "O contexto (público, situação, objetivo) ajuda o modelo a responder de forma relevante." },
+    { id: "p3", pergunta: "O que é uma alucinação em IA generativa?", opcoes: ["Falha de conexão", "Resposta incorreta apresentada como verdade", "Erro de tradução", "Modelo que não responde"], correta: 1, explicacao: "Alucinação é quando o modelo inventa algo e apresenta como verdade. Sempre confira." },
+    { id: "p4", pergunta: "Qual técnica pede ao modelo que mostre o raciocínio passo a passo?", opcoes: ["Zero-shot", "Chain-of-thought", "Fine-tuning", "Embeddings"], correta: 1, explicacao: "Chain-of-thought pede que o modelo mostre os passos do raciocínio." },
+    { id: "p5", pergunta: "Por que é importante revisar a resposta de uma IA?", opcoes: ["Ela nunca erra", "Ela pode errar ou inventar informações", "É proibido usar", "Só vale para textos longos"], correta: 1, explicacao: "Modelos podem errar ou inventar informações. A revisão humana é essencial." },
   ],
   fullcycle: [
-    { id: "p1", pergunta: "Qual comando do Git cria um novo branch e muda para ele?", opcoes: ["git branch -d nome", "git checkout -b nome", "git merge nome", "git push nome"], correta: 1 },
-    { id: "p2", pergunta: "No Docker, o que é uma imagem?", opcoes: ["Um container em execução", "Um modelo somente leitura usado para criar containers", "Um volume de dados", "Uma rede virtual"], correta: 1 },
-    { id: "p3", pergunta: "Em uma API REST, qual método atualiza um recurso existente por completo?", opcoes: ["GET", "POST", "PUT", "DELETE"], correta: 2 },
-    { id: "p4", pergunta: "Qual código HTTP indica que um recurso foi criado com sucesso?", opcoes: ["200", "201", "301", "404"], correta: 1 },
-    { id: "p5", pergunta: "O que é um teste unitário?", opcoes: ["Testa o sistema inteiro pelo navegador", "Testa uma unidade isolada, como uma função", "Testa só o banco de dados", "Testa a velocidade do sistema"], correta: 1 },
+    { id: "p1", pergunta: "Qual comando do Git cria um novo branch e muda para ele?", opcoes: ["git branch -d nome", "git checkout -b nome", "git merge nome", "git push nome"], correta: 1, explicacao: "git checkout -b cria um branch e muda para ele. git switch -c faz o mesmo." },
+    { id: "p2", pergunta: "No Docker, o que é uma imagem?", opcoes: ["Um container em execução", "Um modelo somente leitura usado para criar containers", "Um volume de dados", "Uma rede virtual"], correta: 1, explicacao: "Uma imagem é um modelo somente leitura. O container é criado a partir dela." },
+    { id: "p3", pergunta: "Em uma API REST, qual método atualiza um recurso existente por completo?", opcoes: ["GET", "POST", "PUT", "DELETE"], correta: 2, explicacao: "PUT substitui o recurso por completo. PATCH altera só parte dele." },
+    { id: "p4", pergunta: "Qual código HTTP indica que um recurso foi criado com sucesso?", opcoes: ["200", "201", "301", "404"], correta: 1, explicacao: "201 Created indica criação bem-sucedida. 200 é sucesso genérico." },
+    { id: "p5", pergunta: "O que é um teste unitário?", opcoes: ["Testa o sistema inteiro pelo navegador", "Testa uma unidade isolada, como uma função", "Testa só o banco de dados", "Testa a velocidade do sistema"], correta: 1, explicacao: "Teste unitário verifica uma unidade isolada, como uma função, de forma rápida." },
   ],
 };
 
@@ -221,16 +221,35 @@ export function corrigirCodigo(desafio: DesafioCodigo, codigos: Record<string, s
 
 const semAcento = (texto: string) => texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
+export type DetalheProva = {
+  pergunta: string;
+  opcoes: string[];
+  marcada: number;
+  correta: number;
+  acertou: boolean;
+  explicacao: string;
+};
+
+export type DetalheDesafio =
+  | { tipo: "codigo"; questoes: { titulo: string; testes: { id: string; args: unknown[]; passou: boolean }[] }[] }
+  | { tipo: "prompt"; criterios: { rotulo: string; atendeu: boolean }[] };
+
 export function corrigirPrompt(curso: Curso, texto: string) {
   const desafio = DESAFIOS[curso] as DesafioPrompt;
   const total = desafio.criterios.length;
   const limpo = String(texto ?? "").trim();
   if (limpo.length < MINIMO_CARACTERES_PROMPT) {
-    return { acertos: 0, total, motivo: `Escreva um prompt com pelo menos ${MINIMO_CARACTERES_PROMPT} caracteres.` };
+    return {
+      acertos: 0,
+      total,
+      motivo: `Escreva um prompt com pelo menos ${MINIMO_CARACTERES_PROMPT} caracteres.`,
+      detalhe: { tipo: "prompt" as const, criterios: desafio.criterios.map((c) => ({ rotulo: c.rotulo, atendeu: false })) },
+    };
   }
   const normal = semAcento(limpo);
-  const acertos = desafio.criterios.filter((c) => c.padrao.test(normal)).length;
-  return { acertos, total, motivo: "" };
+  const criterios = desafio.criterios.map((c) => ({ rotulo: c.rotulo, atendeu: c.padrao.test(normal) }));
+  const acertos = criterios.filter((c) => c.atendeu).length;
+  return { acertos, total, motivo: "", detalhe: { tipo: "prompt" as const, criterios } };
 }
 
 export function corrigirCodigoCurso(curso: Curso, codigos: Record<string, string>) {
@@ -238,13 +257,25 @@ export function corrigirCodigoCurso(curso: Curso, codigos: Record<string, string
   const resultados = corrigirCodigo(desafio, codigos);
   const ids = desafio.questoes.flatMap((q) => q.testes.map((t) => t.id));
   const acertos = ids.filter((id) => resultados[id] === true).length;
-  return { acertos, total: ids.length, motivo: "" };
+  const questoes = desafio.questoes.map((q) => ({
+    titulo: q.titulo,
+    testes: q.testes.map((t) => ({ id: t.id, args: t.args, passou: resultados[t.id] === true })),
+  }));
+  return { acertos, total: ids.length, motivo: "", detalhe: { tipo: "codigo" as const, questoes } };
 }
 
-// Nota final: prova (5 questões) + desafio, somados.
+// Nota final: prova (5 questões) + desafio, somados. Inclui o feedback para o aluno.
 export function corrigirTudo(curso: Curso, respostas: number[], codigos: Record<string, string>, texto: string) {
   const prova = PROVAS[curso];
-  const acertosProva = prova.filter((q, i) => respostas[i] === q.correta).length;
+  const detalheProva: DetalheProva[] = prova.map((q, i) => ({
+    pergunta: q.pergunta,
+    opcoes: q.opcoes,
+    marcada: respostas[i],
+    correta: q.correta,
+    acertou: respostas[i] === q.correta,
+    explicacao: q.explicacao,
+  }));
+  const acertosProva = detalheProva.filter((d) => d.acertou).length;
 
   const desafio = DESAFIOS[curso];
   const d = desafio.tipo === "codigo"
@@ -261,6 +292,7 @@ export function corrigirTudo(curso: Curso, respostas: number[], codigos: Record<
     prova: { acertos: acertosProva, total: prova.length },
     desafio: { acertos: d.acertos, total: d.total },
     motivo: d.motivo,
+    feedback: { prova: detalheProva, desafio: d.detalhe as DetalheDesafio },
   };
 }
 
