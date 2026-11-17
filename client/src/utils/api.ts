@@ -78,3 +78,58 @@ export const validateAdminAccess = (data: {
   email: string
   adminCode: string
 }) => api.post<{ ok: boolean }>('/admin-auth', data).then((r) => r.data)
+
+// ---------- Login do aluno e Desafio de Presença ----------
+
+export const loginAluno = (data: { email: string; dataNascimento: string }) =>
+  api.post<{ nome: string; email: string; formacao: string }>('/login', data).then((r) => r.data)
+
+export const fetchDesafio = (curso: string) =>
+  api.get<DesafioAluno>(`/desafio/${curso}`).then((r) => r.data)
+
+export const fetchDesafioStatus = (data: { email: string; dataNascimento: string; curso: string }) =>
+  api.post<DesafioStatus>('/desafio-status', data).then((r) => r.data)
+
+export const enviarDesafio = (data: {
+  email: string
+  dataNascimento: string
+  curso: string
+  codigos?: Record<string, string>
+  texto?: string
+}) => api.post<DesafioResultado>('/desafio/enviar', data).then((r) => r.data)
+
+export interface DesafioStatus {
+  usadas: number
+  restantes: number
+  aprovado: boolean
+  melhorPct: number
+}
+
+export interface DesafioResultado {
+  acertos: number
+  total: number
+  pct: number
+  aprovado: boolean
+  motivo: string
+  restantes: number
+}
+
+export interface DesafioAluno {
+  curso: string
+  titulo: string
+  nivel: string
+  tipo: 'codigo' | 'prompt'
+  enunciado: string
+  notaMinima: number
+  limite: number
+  minimoCaracteres?: number
+  criterios?: { id: string; rotulo: string }[]
+  questoes?: {
+    id: string
+    titulo: string
+    descricao: string
+    funcao: string
+    inicial: string
+    testes: { id: string; args: unknown[] }[]
+  }[]
+}

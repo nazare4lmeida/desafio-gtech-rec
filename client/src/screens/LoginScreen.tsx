@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { useApp } from "../hooks/useAppStore";
-import { validateAdminAccess } from "../utils/api";
+import { loginAluno, validateAdminAccess } from "../utils/api";
 
 export default function LoginScreen() {
   const { login } = useApp();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
+    dataNascimento?: string;
     adminCode?: string;
   }>({});
   const [course, setCourse] = useState<
-    "fullstack" | "ia-generativa" | "ia-soft-skills"
+    "fullstack" | "ia-generativa" | "ia-soft-skills" | "fullcycle"
   >("fullstack");
   const [adminCode, setAdminCode] = useState("");
   const isAdminEmail = email.trim().toLowerCase() === "nazyalmeida@gmail.com";
@@ -26,6 +28,10 @@ export default function LoginScreen() {
 
     if (!email.trim() || !email.includes("@")) {
       e.email = "Informe um e-mail válido.";
+    }
+
+    if (!isAdminEmail && !/^\d{2}\/\d{2}\/\d{4}$/.test(dataNascimento.trim())) {
+      e.dataNascimento = "Informe a data de nascimento (DD/MM/AAAA).";
     }
 
     if (isAdminEmail && !adminCode.trim()) {
@@ -72,7 +78,21 @@ export default function LoginScreen() {
       }
     }
 
-    login(user, false);
+    try {
+      const aluno = await loginAluno({
+        email: user.email,
+        dataNascimento: dataNascimento.trim(),
+      });
+      login({ ...user, name: user.name || aluno.nome, dataNascimento: dataNascimento.trim() }, false);
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.error ??
+        "Não foi possível validar seu acesso agora.";
+      setErrors((prev) => ({
+        ...prev,
+        dataNascimento: msg,
+      }));
+    }
   };
 
   return (
@@ -134,6 +154,29 @@ export default function LoginScreen() {
           )}
         </div>
 
+        {!isAdminEmail && (
+          <div className="mb-6">
+            <label className="block text-[.8rem] font-semibold text-slate mb-1.5 tracking-[.3px]">
+              Data de nascimento
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={dataNascimento}
+              onChange={(e) => setDataNascimento(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void handleSubmit()}
+              placeholder="DD/MM/AAAA"
+              autoComplete="bday"
+              className={`w-full px-3.5 py-3 border-[1.5px] rounded-xl text-[.9rem] font-sans bg-[#FAFCFF] text-text outline-none transition-all
+              focus:border-blue focus:shadow-[0_0_0_3px_rgba(46,109,164,.14)]
+              ${errors.dataNascimento ? "border-red" : "border-border"}`}
+            />
+            {errors.dataNascimento && (
+              <p className="text-red text-[.76rem] mt-1">{errors.dataNascimento}</p>
+            )}
+          </div>
+        )}
+
         {isAdminEmail && (
           <div className="mb-6">
             <label className="block text-[.8rem] font-semibold text-slate mb-1.5 tracking-[.3px]">
@@ -166,7 +209,8 @@ export default function LoginScreen() {
                 e.target.value as
                   | "fullstack"
                   | "ia-generativa"
-                  | "ia-soft-skills",
+                  | "ia-soft-skills"
+                  | "fullcycle",
               )
             }
             className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-navy outline-none focus:border-blue"
@@ -174,6 +218,7 @@ export default function LoginScreen() {
             <option value="fullstack">Fullstack</option>
             <option value="ia-generativa">IA Generativa</option>
             <option value="ia-soft-skills">IA + Soft Skills</option>
+            <option value="fullcycle">FullCycle</option>
           </select>
         </div>
 
@@ -185,7 +230,7 @@ export default function LoginScreen() {
         </button>
 
         <p className="text-center text-[.75rem] text-muted mt-3">
-          Logue com seu nome e e-mail para acessar os desafios!
+          Entre com nome, e-mail e data de nascimento usados na inscrição.
         </p>
       </div>
     </div>

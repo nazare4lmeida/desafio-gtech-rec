@@ -8,7 +8,7 @@ export type Screen =
   | "presenca"
   | "roteiro";
 
-export type CourseTrack = "fullstack" | "ia-generativa" | "ia-soft-skills";
+export type CourseTrack = "fullstack" | "ia-generativa" | "ia-soft-skills" | "fullcycle";
 
 export type Layout = 1 | 2 | 3;
 export type Difficulty = "beginner" | "beginner+" | "intermediate" | "hard";
@@ -26,6 +26,7 @@ export interface User {
   name: string;
   email: string;
   course: CourseTrack;
+  dataNascimento?: string;
 }
 
 export interface Question {
