@@ -8,8 +8,8 @@ export const LIMITE_TENTATIVAS = 2;
 export const MINIMO_CARACTERES_PROMPT = 120;
 export const TEMPO_LIMITE_CODIGO_MS = 2000;
 
-export type Curso = "fullstack" | "ia" | "fullcycle";
-export const CURSOS: Curso[] = ["fullstack", "ia", "fullcycle"];
+export type Curso = "fullstack" | "ia-generativa" | "ia-soft-skills" | "fullcycle";
+export const CURSOS: Curso[] = ["fullstack", "ia-generativa", "ia-soft-skills", "fullcycle"];
 
 type Teste = { id: string; args: unknown[]; esperado: unknown };
 type Questao = { id: string; titulo: string; descricao: string; funcao: string; inicial: string; testes: Teste[] };
@@ -77,7 +77,7 @@ export const DESAFIOS: Record<Curso, DesafioCodigo | DesafioPrompt> = {
     ],
   },
 
-  ia: {
+  "ia-generativa": {
     titulo: "Desafio de Presença · IA Generativa",
     nivel: "Iniciante",
     tipo: "prompt",
@@ -88,6 +88,21 @@ export const DESAFIOS: Record<Curso, DesafioCodigo | DesafioPrompt> = {
       { id: "contexto", rotulo: "Explica o contexto (aluno iniciante, currículo)", padrao: /(contexto|aluno|iniciante|curriculo|estudante)/ },
       { id: "tarefa", rotulo: "Descreve a tarefa com um verbo de ação", padrao: /(revise|corrija|reescreva|analise|melhore|avalie|sugira)/ },
       { id: "formato", rotulo: "Pede um formato para a resposta", padrao: /(formato|liste|topicos|tabela|passo a passo|em \d+ )/ },
+      { id: "restricoes", rotulo: "Coloca restrições ou limites", padrao: /(nao |evite|limite|no maximo|apenas|somente|sem )/ },
+    ],
+  },
+
+  "ia-soft-skills": {
+    titulo: "Desafio de Presença · IA + Soft Skills",
+    nivel: "Iniciante",
+    tipo: "prompt",
+    enunciado:
+      "Escreva um prompt para uma IA generativa ajudar um aluno a treinar uma habilidade comportamental (comunicação, trabalho em equipe ou resolução de conflitos). O prompt deve cobrir os pontos abaixo.",
+    criterios: [
+      { id: "papel", rotulo: 'Diz quem a IA é (ex.: "Atue como…")', padrao: /(atue como|aja como|voce e|voce atua|assuma o papel)/ },
+      { id: "contexto", rotulo: "Explica a situação (equipe, colega, apresentação, entrevista)", padrao: /(equipe|colega|apresentacao|entrevista|reuniao|grupo|time)/ },
+      { id: "tarefa", rotulo: "Descreve a tarefa com um verbo de ação", padrao: /(simule|treine|pratique|explique|oriente|sugira|prepare)/ },
+      { id: "formato", rotulo: "Pede um formato para a resposta", padrao: /(formato|liste|topicos|passo a passo|em \d+ )/ },
       { id: "restricoes", rotulo: "Coloca restrições ou limites", padrao: /(nao |evite|limite|no maximo|apenas|somente|sem )/ },
     ],
   },
@@ -196,8 +211,8 @@ export function corrigirCodigo(desafio: DesafioCodigo, codigos: Record<string, s
 const semAcento = (texto: string) =>
   texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-export function corrigirPrompt(texto: string) {
-  const desafio = DESAFIOS.ia as DesafioPrompt;
+export function corrigirPrompt(curso: Curso, texto: string) {
+  const desafio = DESAFIOS[curso] as DesafioPrompt;
   const total = desafio.criterios.length;
   const limpo = String(texto ?? "").trim();
   if (limpo.length < MINIMO_CARACTERES_PROMPT) {

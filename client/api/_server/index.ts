@@ -830,7 +830,55 @@ app.post("/api/admin-auth", (req, res) => {
   res.json({ ok: isValid });
 });
 
-// ---------- Desafio de Presença ----------
+// ---------- Login do aluno e Desafio de Presença ----------
+
+// Converte DD/MM/AAAA ou AAAA-MM-DD para AAAA-MM-DD.
+function dataIso(valor: unknown): string {
+  const t = String(valor ?? "").trim();
+  const br = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : "";
+}
+
+// Confere o aluno na tabela alunos (sincronizada do Geração Tech): e-mail + data de nascimento.
+async function verificarAluno(email: string, nascimento: string) {
+  const sb = getSupabaseClient();
+  if (!sb) return { erro: "Banco não configurado.", status: 503 as const };
+  if (!email) return { erro: "Informe o e-mail.", status: 400 as const };
+  const iso = dataIso(nascimento);
+  if (!iso) return { erro: "Informe a data de nascimento (DD/MM/AAAA).", status: 400 as const };
+
+  const { data, error } = await sb
+    .from("alunos")
+    .select("nome, email, data_nascimento, formacao")
+    .eq("email", email)
+    .limit(1);
+  if (error) throw error;
+
+  const aluno = data?.[0];
+  if (!aluno) {
+    return {
+      erro: "Cadastro não encontrado. Só entram os alunos aprovados e matriculados. Procure a coordenação.",
+      status: 403 as const,
+    };
+  }
+  if (aluno.data_nascimento && String(aluno.data_nascimento).slice(0, 10) !== iso) {
+    return { erro: "Data de nascimento incorreta.", status: 401 as const };
+  }
+  return { aluno };
+}
+
+app.post("/api/login", async (req, res) => {
+  const email = String(req.body?.email ?? "").trim().toLowerCase();
+  try {
+    const r = await verificarAluno(email, req.body?.dataNascimento);
+    if ("erro" in r) return res.status(r.status).json({ error: r.erro });
+    res.json({ nome: r.aluno.nome ?? "", email, formacao: r.aluno.formacao ?? "" });
+  } catch (error: any) {
+    console.error("Erro no login do aluno:", error);
+    res.status(500).json({ error: "Não foi possível validar o acesso agora." });
+  }
+});
 
 app.get("/api/desafio/:curso", (req, res) => {
   const curso = req.params.curso;
@@ -840,14 +888,15 @@ app.get("/api/desafio/:curso", (req, res) => {
   res.json({ curso, notaMinima: NOTA_MINIMA, limite: LIMITE_TENTATIVAS, ...desafioParaAluno(curso) });
 });
 
-app.get("/api/desafio-status", async (req, res) => {
-  const email = String(req.query.email ?? "").trim().toLowerCase();
-  const curso = String(req.query.curso ?? "");
+app.post("/api/desafio-status", async (req, res) => {
+  const email = String(req.body?.email ?? "").trim().toLowerCase();
+  const curso = req.body?.curso;
   const sb = getSupabaseClient();
-  if (!sb) return res.status(503).json({ error: "Banco não configurado." });
-  if (!email || !ehCurso(curso)) return res.status(400).json({ error: "Dados inválidos." });
+  if (!ehCurso(curso)) return res.status(400).json({ error: "Formação inválida." });
   try {
-    const { data, error } = await sb
+    const r = await verificarAluno(email, req.body?.dataNascimento);
+    if ("erro" in r) return res.status(r.status).json({ error: r.erro });
+    const { data, error } = await sb!
       .from("desafio_tentativas")
       .select("numero, pct, aprovado")
       .eq("email", email)
@@ -871,13 +920,16 @@ app.post("/api/desafio/enviar", async (req, res) => {
   if (!sb) return res.status(503).json({ error: "Banco não configurado." });
 
   const email = String(req.body?.email ?? "").trim().toLowerCase();
-  const nome = String(req.body?.nome ?? "").trim();
   const curso = req.body?.curso;
-  if (!email || !ehCurso(curso)) {
-    return res.status(400).json({ error: "Informe o e-mail e a formação." });
+  if (!ehCurso(curso)) {
+    return res.status(400).json({ error: "Formação inválida." });
   }
 
   try {
+    const r = await verificarAluno(email, req.body?.dataNascimento);
+    if ("erro" in r) return res.status(r.status).json({ error: r.erro });
+    const nome = String(r.aluno.nome ?? "");
+
     const { data: anteriores, error: erroConsulta } = await sb
       .from("desafio_tentativas")
       .select("numero")
@@ -892,11 +944,11 @@ app.post("/api/desafio/enviar", async (req, res) => {
 
     // A correção é feita aqui, no servidor. O navegador só envia o que o aluno escreveu.
     let resultado: { acertos: number; total: number; pct: number; motivo?: string };
-    if (curso === "ia") {
-      resultado = corrigirPrompt(String(req.body?.texto ?? ""));
-    } else {
+    if (curso === "fullstack" || curso === "fullcycle") {
       const codigos = (req.body?.codigos ?? {}) as Record<string, string>;
       resultado = corrigirCodigoCurso(curso, codigos);
+    } else {
+      resultado = corrigirPrompt(curso, String(req.body?.texto ?? ""));
     }
     const aprovado = resultado.pct >= NOTA_MINIMA;
 

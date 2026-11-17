@@ -1,12 +1,12 @@
 -- Desafio de Presença GT4.0 · tabelas novas.
--- Rode no SQL Editor do Supabase. As tabelas results, recovery_results e presenca_results já existem.
+-- Rode no SQL Editor do Supabase. As tabelas alunos (sincronizada do GT), results, recovery_results e presenca_results já existem.
 
 -- Cada tentativa do desafio (máximo 2 por aluno e formação, controlado no servidor).
 create table if not exists public.desafio_tentativas (
   id bigserial primary key,
   email text not null,
   nome text not null default '',
-  curso text not null,            -- fullstack | ia | fullcycle
+  curso text not null,            -- fullstack | ia-generativa | ia-soft-skills | fullcycle
   numero smallint not null,       -- 1 ou 2
   acertos integer not null,
   total integer not null,
