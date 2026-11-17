@@ -96,13 +96,6 @@ export default function AdminScreen({ onToast }: Props) {
             </button>
 
             <button
-              onClick={() => navigate('recuperacao')}
-              className="px-4 py-2 rounded-xl bg-gold text-white text-sm font-semibold hover:opacity-90 transition-all"
-            >
-              Testar Prova de Recuperação
-            </button>
-
-            <button
               onClick={() => navigate('presenca')}
               className="px-4 py-2 rounded-xl bg-blue text-white text-sm font-semibold hover:opacity-90 transition-all"
             >
