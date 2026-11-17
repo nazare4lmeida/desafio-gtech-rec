@@ -1,6 +1,7 @@
 import { useApp } from "../hooks/useAppStore";
 
-const isAdminEmail = (email?: string) => email?.toLowerCase() === "nazyalmeida@gmail.com";
+const isAdminEmail = (email?: string) =>
+  email?.toLowerCase() === "admin@gt4.com";
 
 export default function SelectScreen() {
   const { state, navigate, setAdminTab } = useApp();
@@ -59,7 +60,9 @@ export default function SelectScreen() {
             style={{ animationDelay: `${0.1 + i * 0.08}s` }}
             className="animate-fade-up flex items-center gap-5 p-5 bg-surface border-[1.5px] border-border rounded-[14px] cursor-pointer transition-all duration-200 hover:border-blue hover:shadow-[0_6px_24px_rgba(46,109,164,.13)] hover:-translate-y-0.5"
           >
-            <div className={`w-12 h-12 ${m.bg} rounded-xl flex items-center justify-center text-2xl flex-shrink-0`}>
+            <div
+              className={`w-12 h-12 ${m.bg} rounded-xl flex items-center justify-center text-2xl flex-shrink-0`}
+            >
               {m.icon}
             </div>
 

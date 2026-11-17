@@ -25,7 +25,7 @@ export default function LoginScreen() {
     "fullstack" | "ia-generativa" | "fullcycle"
   >("fullstack");
   const [adminCode, setAdminCode] = useState("");
-  const isAdminEmail = email.trim().toLowerCase() === "nazyalmeida@gmail.com";
+  const isAdminEmail = email.trim().toLowerCase() === "admin@gt4.com";
 
   const validate = () => {
     const e: typeof errors = {};
@@ -92,7 +92,14 @@ export default function LoginScreen() {
         dataNascimento: dataNascimento.trim(),
         curso: user.course,
       });
-      login({ ...user, name: user.name || aluno.nome, dataNascimento: dataNascimento.trim() }, false);
+      login(
+        {
+          ...user,
+          name: user.name || aluno.nome,
+          dataNascimento: dataNascimento.trim(),
+        },
+        false,
+      );
     } catch (error: any) {
       const bruto = error?.response?.data?.error;
       const msg =
@@ -183,7 +190,9 @@ export default function LoginScreen() {
               ${errors.dataNascimento ? "border-red" : "border-border"}`}
             />
             {errors.dataNascimento && (
-              <p className="text-red text-[.76rem] mt-1">{errors.dataNascimento}</p>
+              <p className="text-red text-[.76rem] mt-1">
+                {errors.dataNascimento}
+              </p>
             )}
           </div>
         )}
@@ -217,10 +226,7 @@ export default function LoginScreen() {
             value={course}
             onChange={(e) =>
               setCourse(
-                e.target.value as
-                  | "fullstack"
-                  | "ia-generativa"
-                  | "fullcycle",
+                e.target.value as "fullstack" | "ia-generativa" | "fullcycle",
               )
             }
             className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-navy outline-none focus:border-blue"

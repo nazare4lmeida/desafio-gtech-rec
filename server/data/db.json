@@ -2,8 +2,8 @@
   "results": [
     {
       "id": 1,
-      "name": "Nazare Almeida",
-      "email": "nazyalmeida@gmail.com",
+      "name": "Admin GT4",
+      "email": "admin@gt4.com",
       "score": 10,
       "max": 10,
       "passed": true,
@@ -19,8 +19,8 @@
   "recoveryResults": [
     {
       "id": 2,
-      "name": "Nazare Almeida",
-      "email": "nazyalmeida@gmail.com",
+      "name": "Admin GT4",
+      "email": "admin@gt4.com",
       "course": "recuperacao",
       "score": 7,
       "passed": true,
@@ -30,8 +30,8 @@
     },
     {
       "id": 1,
-      "name": "Nazare Almeida",
-      "email": "nazyalmeida@gmail.com",
+      "name": "Admin GT4",
+      "email": "admin@gt4.com",
       "course": "recuperacao",
       "score": 7,
       "passed": true,
@@ -43,8 +43,8 @@
   "presencaResults": [
     {
       "id": 1,
-      "name": "Nazare Almeida",
-      "email": "nazyalmeida@gmail.com",
+      "name": "Admin GT4",
+      "email": "admin@gt4.com",
       "course": "presenca",
       "score": 0,
       "max": 4,
@@ -61,12 +61,7 @@
       "difficulty": "beginner",
       "category": "frontend",
       "text": "Qual tag HTML é usada para criar um link clicável?",
-      "options": [
-        "<link>",
-        "<a>",
-        "<href>",
-        "<button>"
-      ],
+      "options": ["<link>", "<a>", "<href>", "<button>"],
       "correct": 1,
       "feedbackOk": "<strong>Correto!</strong> <code>&lt;a&gt;</code> é a tag de âncora do HTML.",
       "feedbackNok": "<strong>Quase!</strong> A tag correta é <code>&lt;a&gt;</code> (âncora)."
@@ -93,12 +88,7 @@
       "difficulty": "intermediate",
       "category": "lógica",
       "text": "Qual é o resultado de <code>typeof null</code> em JavaScript?",
-      "options": [
-        "\"null\"",
-        "\"undefined\"",
-        "\"object\"",
-        "\"boolean\""
-      ],
+      "options": ["\"null\"", "\"undefined\"", "\"object\"", "\"boolean\""],
       "correct": 2,
       "feedbackOk": "<strong>Correto!</strong> Retorna <code>\"object\"</code> por retrocompatibilidade.",
       "feedbackNok": "<strong>Quase!</strong> <code>typeof null</code> retorna <code>\"object\"</code>."
@@ -109,12 +99,7 @@
       "difficulty": "intermediate",
       "category": "backend",
       "text": "Em uma API REST, qual método HTTP atualiza parcialmente um recurso?",
-      "options": [
-        "PUT",
-        "POST",
-        "DELETE",
-        "PATCH"
-      ],
+      "options": ["PUT", "POST", "DELETE", "PATCH"],
       "correct": 3,
       "feedbackOk": "<strong>Correto!</strong> <code>PATCH</code> atualiza parcialmente.",
       "feedbackNok": "<strong>Quase!</strong> O método correto é <code>PATCH</code>."
